@@ -21,13 +21,14 @@ class Player_Child(pygame.sprite.Sprite):
         ## Stats and states
         self.baseSpeed = speed ## Can change base speed (how many pixels to move)
         self.speedMultiplier = 1
-        self.velocityY = 0  ## jump height
         self.direction = 0  ## Movement direction | Left = -1 | Idle = 0 | Right = 1 |
         self.facingRight = True
-        self.onGround = True
-        self.action = 0 ## Player action | Idle = 0 | Walk = 1 | Run = 2 | Jump = 3 | can add more actions if necessary
         self.isRunning = False
+        self.velocityY = 0  ## jump height
         self.gravity = gravity
+        self.isJumping = False
+        self.onGround = False
+        self.action = 0     ## Player action | Idle = 0 | Walk = 1 | Run = 2 | Jump = 3 | can add more actions if necessary
         #self.isAlive = True
 
 
@@ -57,16 +58,17 @@ class Player_Child(pygame.sprite.Sprite):
             self.speedMultiplier = 2
         if keys[pygame.K_SPACE] and self.onGround:
             self.velocityY = -12
+            self.isJumping = True
             self.onGround = False
 
         if not self.onGround:
-            self.update_action(3)
+            self.update_action(3) # jump
         elif self.direction == 0:
-            self.update_action(0)
+            self.update_action(0) # idle
         elif self.isRunning:
-            self.update_action(2)
+            self.update_action(2) # run
         else:
-            self.update_action(1)
+            self.update_action(1) # walk
 
 
         ## assign movement variables if moving left or right
@@ -75,7 +77,7 @@ class Player_Child(pygame.sprite.Sprite):
         if self.direction == 1:
             dx = int(self.baseSpeed * self.speedMultiplier)
         
-        ## jumping mechanism (unfinished)
+        ## jumping mechanism
         self.velocityY += self.gravity
         if self.velocityY > 10:  ## limiting terminal velocity 
             self.velocityY = 10
@@ -86,6 +88,7 @@ class Player_Child(pygame.sprite.Sprite):
             dy = 500 - self.rect.bottom
             self.velocityY = 0
             self.onGround = True
+            self.isJumping = False
 
         ## update rect/player position
         self.rect.x += dx
