@@ -1,7 +1,8 @@
 import pygame
 
 from Entities.Player import player_child as Player
-from Scenes_Background import testscene
+from Entities.Enemy import enemy_krampus as Enemy
+from Scenes import testscene
 
 ## Screen size
 SCREEN_WIDTH = 800
@@ -17,15 +18,21 @@ WHITE = (255, 255, 255)
 GRAVITY = 0.75
 
 ## player variables
-## FOR TEST SCENE 
 MOVEMENT_SPEED = 3
 PLAYER_X = 100
 PLAYER_Y = 100
-SIZE_SCALE = 0.1
+PLAYER_SIZE_SCALE = 0.1
 
-player = Player.Player_Child(PLAYER_X, PLAYER_Y, SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
+player = Player.Player_Child(PLAYER_X, PLAYER_Y, PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
 # moving_left = False
 # moving_right = False
+
+## enemy variabls 
+ENEMY_X = 700
+ENEMY_Y = 450
+ENEMY_SIZE_SCALE = 0.15
+
+enemy = Enemy.Enemy_Krampus(ENEMY_X, ENEMY_Y, ENEMY_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
 
 ## set framrate
 clock = pygame.time.Clock()
@@ -45,9 +52,10 @@ while running:
         # if event.type == pygame.K_d:
         #     moving_right = True
 
-
     player.draw(screen)
     player.move()
+
+    enemy.draw(screen)
 
     pygame.display.flip()
     clock.tick(FPS)

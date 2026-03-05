@@ -83,7 +83,7 @@ class Player_Child(pygame.sprite.Sprite):
             self.velocityY = 10
         dy += self.velocityY
 
-        ## check collision with floor
+        ## check collision with floor (FOR TEST SCENE)
         if self.rect.bottom + dy > 500:
             dy = 500 - self.rect.bottom
             self.velocityY = 0
