@@ -34,6 +34,9 @@ ENEMY_SIZE_SCALE = 0.15
 
 enemy = Enemy.Enemy_Krampus(ENEMY_X, ENEMY_Y, ENEMY_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
 
+obstacles = pygame.sprite.Group()
+obstacles.add(enemy)
+
 ## set framrate
 clock = pygame.time.Clock()
 FPS = 60
@@ -56,6 +59,11 @@ while running:
     player.move()
 
     enemy.draw(screen)
+
+    ##collsion sound test
+    anyCollision =  pygame.sprite.spritecollideany(player, obstacles)
+    if anyCollision:
+        enemy.shriek()
 
     pygame.display.flip()
     clock.tick(FPS)

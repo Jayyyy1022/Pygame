@@ -27,3 +27,10 @@ class Enemy_Krampus(pygame.sprite.Sprite):
     
     def draw(self, screen):
         screen.blit(pygame.transform.flip(self.img, not self.facingRight, False), self.rect)
+
+    def shriek(self):
+        ## sound test
+        pygame.mixer.init()
+        scare = pygame.mixer.Sound("Assets\\SFX\\jumpscare.wav")
+        scare.set_volume(0.16)
+        scare.play()
