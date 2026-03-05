@@ -1,6 +1,7 @@
 import pygame
 
 from Entities.Player import player_child as Player
+from Scenes_Background import testscene
 
 ## Screen size
 SCREEN_WIDTH = 800
@@ -12,8 +13,17 @@ pygame.display.set_caption("Good Night, Sleep Tight")
 ## Colors
 WHITE = (255, 255, 255)
 
-# player and player states
-player = Player.Player_Child(100, 550, 0.1, 3)
+## game variables
+GRAVITY = 0.75
+
+## player variables
+## FOR TEST SCENE 
+MOVEMENT_SPEED = 3
+PLAYER_X = 100
+PLAYER_Y = 100
+SIZE_SCALE = 0.1
+
+player = Player.Player_Child(PLAYER_X, PLAYER_Y, SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
 # moving_left = False
 # moving_right = False
 
@@ -21,12 +31,9 @@ player = Player.Player_Child(100, 550, 0.1, 3)
 clock = pygame.time.Clock()
 FPS = 60
 
-def drawbg():
-    screen.fill(WHITE)
-
 running = True
 while running:
-    drawbg()
+    testscene.drawBG(screen)
 
     for event in pygame.event.get():
         ## Quit game

@@ -1,10 +1,8 @@
 import pygame
 
 class Player_Child(pygame.sprite.Sprite):
-    
 
-
-    def __init__(self, x, y, scale, speed):
+    def __init__(self, x, y, scale, speed, gravity):
         pygame.sprite.Sprite.__init__(self)
         
         ## Frames
@@ -17,18 +15,19 @@ class Player_Child(pygame.sprite.Sprite):
         self.walkingFrames = []
         self.jumpingFrames = []
 
-        self.frameIndex = 0 ## starts from first img in array
+        self.frameIndex = 0 ## starts from first img in array, will be used for looping player frames
         self.updateTime = pygame.time.get_ticks() ## times how long has passed since last animation update, used for animation cycles
 
         ## Stats and states
         self.baseSpeed = speed ## Can change base speed (how many pixels to move)
         self.speedMultiplier = 1
-        self.velocityY = 0
+        self.velocityY = 0  ## jump height
         self.direction = 0  ## Movement direction | Left = -1 | Idle = 0 | Right = 1 |
         self.facingRight = True
         self.onGround = True
         self.action = 0 ## Player action | Idle = 0 | Walk = 1 | Run = 2 | Jump = 3 | can add more actions if necessary
         self.isRunning = False
+        self.gravity = gravity
         #self.isAlive = True
 
 
@@ -44,7 +43,7 @@ class Player_Child(pygame.sprite.Sprite):
         dx = 0
         dy = 0
 
-        ## WASD Movement | K for run | J for interact
+        ## A - D Movement | Space for jump | K for run | J for interact
         if keys[pygame.K_a]:
             #self.rect.x -= self.speed
             self.direction = -1
@@ -56,11 +55,13 @@ class Player_Child(pygame.sprite.Sprite):
         if keys[pygame.K_k] and self.direction != 0:
             self.isRunning = True
             self.speedMultiplier = 2
-        if keys[pygame.K_w] and self.onGround:
-            self.velocityY = -15
+        if keys[pygame.K_SPACE] and self.onGround:
+            self.velocityY = -12
             self.onGround = False
 
-        if self.direction == 0:
+        if not self.onGround:
+            self.update_action(3)
+        elif self.direction == 0:
             self.update_action(0)
         elif self.isRunning:
             self.update_action(2)
@@ -69,15 +70,22 @@ class Player_Child(pygame.sprite.Sprite):
 
 
         ## assign movement variables if moving left or right
-        if self.direction == -1:
+        if self.direction == -1:    
             dx = int(-(self.baseSpeed * self.speedMultiplier))
         if self.direction == 1:
             dx = int(self.baseSpeed * self.speedMultiplier)
         
         ## jumping mechanism (unfinished)
-        if self.onGround == True:
-            self.velocityY = -15
+        self.velocityY += self.gravity
+        if self.velocityY > 10:  ## limiting terminal velocity 
+            self.velocityY = 10
+        dy += self.velocityY
 
+        ## check collision with floor
+        if self.rect.bottom + dy > 500:
+            dy = 500 - self.rect.bottom
+            self.velocityY = 0
+            self.onGround = True
 
         ## update rect/player position
         self.rect.x += dx
