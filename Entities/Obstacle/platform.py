@@ -13,7 +13,6 @@ class Platform(pygame.sprite.Sprite):
             self.image = pygame.transform.scale(original_image, (width, height))
         else:
             ## Fallback: If no image is provided, create a simple solid color rectangle
-            print(f"⚠️ 警告: 找不到图片文件 -> {image_path}")
             self.image = pygame.Surface((width, height))
             self.image.fill(color)
             
