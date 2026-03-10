@@ -1,81 +1,31 @@
 import pygame
-
-from Entities.Player import player_child as Player
-from Entities.Enemy import enemy_krampus as Enemy
-from Scenes import testscene
+import sys
 from Scenes import chapter1
+## from Scenes import chapter2
 
 ## Screen size
 SCREEN_WIDTH = 800
-SCREEN_HEIGTH = 600
+SCREEN_HEIGHT = 600
 
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGTH))
+pygame.init()
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Good Night, Sleep Tight")
 
-## Colors
-WHITE = (255, 255, 255)
+## --- SCENE MANAGER (The Router) ---
+current_scene = "CHAPTER1" 
 
-## game variables
-GRAVITY = 0.75
-
-## player variables
-MOVEMENT_SPEED = 3
-PLAYER_X = 100
-PLAYER_Y = 100
-PLAYER_SIZE_SCALE = 0.1
-
-player = Player.Player_Child(PLAYER_X, PLAYER_Y, PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
-# moving_left = False
-# moving_right = False
-
-## enemy variabls 
-ENEMY_X = 700
-ENEMY_Y = 450
-ENEMY_SIZE_SCALE = 0.15
-
-enemy = Enemy.Enemy_Krampus(ENEMY_X, ENEMY_Y, ENEMY_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
-
-obstacles = pygame.sprite.Group()
-obstacles.add(enemy)
-
-## <-- ADD THIS: Initialize Chapter 1 level before the loop
-current_level = chapter1.Chapter1()
-
-## set framrate
-clock = pygame.time.Clock()
-FPS = 60
-
-running = True
-while running:
-    testscene.drawBG(screen)
-
-    ## Draw chapter 1 platforms on the screen
-    current_level.draw(screen)
-
-    for event in pygame.event.get():
-        ## Quit game
-        if event.type == pygame.QUIT:
-            running = False
-        # ## Keyboard movement WASD
-        # if event.type == pygame.K_a:
-        #     moving_left = True
-        # if event.type == pygame.K_d:
-        #     moving_right = True
-
-    player.draw(screen)
-    player.move(current_level.platforms)
-
-    enemy.draw(screen)
-
-    ## Update chapter 1 logic (camera scrolling and enemy chase)
-    current_level.update(player, enemy, SCREEN_WIDTH)
-
-    ##collsion sound test
-    anyCollision =  pygame.sprite.spritecollideany(player, obstacles)
-    if anyCollision:
-        enemy.shriek()
-
-    pygame.display.flip()
-    clock.tick(FPS)
+while True:
+    if current_scene == "CHAPTER1":
+        ## Run your chapter file. It will return "CHAPTER2" or "QUIT" when finished.
+        current_scene = chapter1.run(screen)
+        
+    elif current_scene == "CHAPTER2":
+        ## current_scene = chapter2.run(screen)
+        print("Transitioning to Chapter 2! (Teammate's file will run here)")
+        break ## Stop for now since chapter 2 isn't ready
+        
+    elif current_scene == "QUIT":
+        break
 
 pygame.quit()
+sys.exit()

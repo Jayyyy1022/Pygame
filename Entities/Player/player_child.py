@@ -3,9 +3,8 @@ import pygame
 class Player_Child(pygame.sprite.Sprite):
 
     def __init__(self, x, y, scale, speed, gravity):
-        pygame.sprite.Sprite.__init__(self)
+        super().__init__()
         
-        ## Frames
         img = pygame.image.load("Assets\\Player\\player_idle.png")
         self.img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
         self.rect = self.img.get_rect()
@@ -15,44 +14,36 @@ class Player_Child(pygame.sprite.Sprite):
         self.walkingFrames = []
         self.jumpingFrames = []
 
-        self.frameIndex = 0 ## starts from first img in array, will be used for looping player frames
-        self.updateTime = pygame.time.get_ticks() ## times how long has passed since last animation update, used for animation cycles
+        self.frameIndex = 0 
+        self.updateTime = pygame.time.get_ticks() 
 
-        ## Stats and states
-        self.baseSpeed = speed ## Can change base speed (how many pixels to move)
+        self.baseSpeed = speed 
         self.speedMultiplier = 1
-        self.direction = 0  ## Movement direction | Left = -1 | Idle = 0 | Right = 1 |
+        self.direction = 0  
         self.facingRight = True
         self.isRunning = False
-        self.velocityY = 0  ## jump height
+        self.velocityY = 0  
         self.gravity = gravity
         self.isJumping = False
         self.onGround = False
-        self.action = 0     ## Player action | Idle = 0 | Walk = 1 | Run = 2 | Jump = 3 | can add more actions if necessary
-        #self.isAlive = True
+        self.action = 0  
 
-
-## Added 'platforms' parameter to receive level obstacles
     def move(self, platforms):
         keys = pygame.key.get_pressed()
         
-        ## enter idle state when no key presses / Resetting speed
         self.direction = 0
         self.isRunning = False
         self.speedMultiplier = 1.0
-
-        ## reset movement variables - to be used for collision
         dx = 0
         dy = 0
 
-        ## A - D Movement | Space for jump | K for run | J for interact
         if keys[pygame.K_a]:
             self.direction = -1
             self.facingRight = False
         if keys[pygame.K_d]:
             self.direction = 1
             self.facingRight = True
-        if keys[pygame.K_k] and self.direction != 0:
+        if keys[pygame.K_k] or keys[pygame.K_LSHIFT]: 
             self.isRunning = True
             self.speedMultiplier = 2
         if keys[pygame.K_SPACE] and self.onGround:
@@ -61,51 +52,47 @@ class Player_Child(pygame.sprite.Sprite):
             self.onGround = False
 
         if not self.onGround:
-            self.update_action(3) # jump
+            self.update_action(3) 
         elif self.direction == 0:
-            self.update_action(0) # idle
+            self.update_action(0) 
         elif self.isRunning:
-            self.update_action(2) # run
+            self.update_action(2) 
         else:
-            self.update_action(1) # walk
+            self.update_action(1) 
 
-
-        ## assign movement variables if moving left or right
         if self.direction == -1:    
             dx = int(-(self.baseSpeed * self.speedMultiplier))
         if self.direction == 1:
             dx = int(self.baseSpeed * self.speedMultiplier)
         
-        ## jumping mechanism
         self.velocityY += self.gravity
-        if self.velocityY > 10:  ## limiting terminal velocity 
+        if self.velocityY > 10:  
             self.velocityY = 10
-        
-        ## apply gravity to dy
-        dy += self.velocityY
+        dy = int(self.velocityY)
 
-        ## --- NEW DYNAMIC COLLISION DETECTION ---
+        ## --- DYNAMIC COLLISION DETECTION ---
         
-        ## 1. X-axis collision
+        ## X-axis collision
         self.rect.x += dx
         for platform in platforms:
             if platform.rect.colliderect(self.rect):
-                if dx > 0: # Moving right, hit left side of platform
-                    self.rect.right = platform.rect.left
-                if dx < 0: # Moving left, hit right side of platform
-                    self.rect.left = platform.rect.right
+                if self.rect.bottom > platform.rect.top + 2:
+                    if dx > 0: 
+                        self.rect.right = platform.rect.left
+                    if dx < 0: 
+                        self.rect.left = platform.rect.right
 
-        ## 2. Y-axis collision
+        ## Y-axis collision
         self.rect.y += dy
-        self.onGround = False # Reset ground state before checking
+        self.onGround = False 
         for platform in platforms:
             if platform.rect.colliderect(self.rect):
-                if dy > 0: # Falling down, hit top of platform
+                if dy >= 0: 
                     self.rect.bottom = platform.rect.top
                     self.velocityY = 0
                     self.onGround = True
                     self.isJumping = False
-                elif dy < 0: # Jumping up, hit bottom of platform (ceiling)
+                elif dy < 0: 
                     self.rect.top = platform.rect.bottom
                     self.velocityY = 0
 
@@ -117,8 +104,6 @@ class Player_Child(pygame.sprite.Sprite):
             self.action = new_action
             self.frameIndex = 0 
             self.updateTime = pygame.time.get_ticks()
-        
-        
 
     def draw(self, screen):
         screen.blit(pygame.transform.flip(self.img, not self.facingRight, False), self.rect)
