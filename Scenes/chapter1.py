@@ -1,5 +1,6 @@
 import pygame
 import os
+import random
 from Entities.Player import player_child as Player
 from Entities.Enemy import enemy_krampus as Enemy
 from Entities.Obstacle.platform import Platform
@@ -60,6 +61,15 @@ def run(screen):
     camera_scroll = 0
     chase_started = False
 
+    ## --- Initialize Snowflakes Array ---
+    snowflakes = []
+    for i in range(200):
+        x = random.randrange(0, SCREEN_WIDTH)
+        y = random.randrange(0, SCREEN_HEIGHT) 
+        speed = random.randrange(1, 4) 
+        size = random.randrange(1, 3) 
+        snowflakes.append([x, y, speed, size])
+
     ## --- 5. THE MAIN GAME LOOP FOR CHAPTER 1 ---
     running = True
     while running:
@@ -97,8 +107,8 @@ def run(screen):
                 p.rect.x -= scroll_amount
             enemy.rect.x -= scroll_amount
 
-        ## E. Enemy Chase Logic (FASTER SPEED)
-        if camera_scroll > 600:
+        ## E. Enemy Chase Logic
+        if camera_scroll > 1000:
             if not chase_started:
                 enemy.rect.x = -150 
                 chase_started = True
@@ -131,7 +141,20 @@ def run(screen):
             return "CHAPTER2" 
 
         ## --- H. RENDERING ---
-        screen.fill(current_bg_color) 
+        screen.fill(current_bg_color)
+
+        ## NDraw and update Snowflakes (ONLY IF IN THE FOREST)
+        if is_door_opened:
+            for flake in snowflakes:
+                flake[1] += flake[2] 
+                
+                flake[0] += random.choice([-1, 0, 1]) 
+                
+                if flake[1] > SCREEN_HEIGHT:
+                    flake[1] = random.randrange(-50, -10) 
+                    flake[0] = random.randrange(0, SCREEN_WIDTH)
+                
+                pygame.draw.circle(screen, (255, 255, 255), (flake[0], flake[1]), flake[3])
         
         platforms.draw(screen)
         player.draw(screen)
