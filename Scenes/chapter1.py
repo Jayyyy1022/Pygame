@@ -4,6 +4,7 @@ import random
 from Entities.Player import player_child as Player
 from Entities.Enemy import enemy_krampus as Enemy
 from Entities.Obstacle.platform import Platform
+from Entities.Decoration.prop import BackgroundDecoration
 
 def run(screen):
     clock = pygame.time.Clock()
@@ -25,7 +26,6 @@ def run(screen):
     pygame.mixer.stop()
     pygame.mixer.music.stop()
     
-    ## Load door open sound
     try:
         door_path = os.path.join(ROOT_DIR, "Assets", "SFX", "door_open.mp3")
         door_sfx = pygame.mixer.Sound(door_path) 
@@ -33,7 +33,6 @@ def run(screen):
     except:
         door_sfx = None
 
-    ## Load jumpscare sound (Krampus catch)
     try:
         jumpscare_path = os.path.join(ROOT_DIR, "Assets", "SFX", "jumpscare.wav")
         jumpscare_sfx = pygame.mixer.Sound(jumpscare_path)
@@ -41,7 +40,6 @@ def run(screen):
     except:
         jumpscare_sfx = None
 
-    ## Load and play Room BGM (Loops infinitely)
     try:
         room_bgm_path = os.path.join(ROOT_DIR, "Assets", "SFX", "room_bgm.wav")
         pygame.mixer.music.load(room_bgm_path)
@@ -56,15 +54,19 @@ def run(screen):
     enemies_group = pygame.sprite.Group()
     enemies_group.add(enemy)
 
-    ## --- 3. Build the Level (Platforms) ---
+    ## --- 3. Build the Level ---
     platforms = pygame.sprite.Group()
+    decorations = pygame.sprite.Group()
     
     wood_floor_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "wood_floor.png")
     woods_platform_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "woods_platform.png")
     rock_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "rock.png")
     snow_floor_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "snow_floor.png")
+    room_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "room.png")
+    wood_platform2_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "wood_platform2.png")
+    wood_platform_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "wood_platform.png")
+    wood_platform3_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "wood_platform3.png")
     
-    ## Load forest background image
     forest_bg_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "forest_bg.png")
     try:
         bg_surface = pygame.image.load(forest_bg_img).convert_alpha()
@@ -72,37 +74,47 @@ def run(screen):
     except:
         bg_surface = None
 
-    ## --- Scene 1: Starting Room ---
-    ## Foundation for the room floor (fills the bottom gap)
-    platforms.add(Platform(0, 530, 500, 70, color=(45, 25, 15))) 
-    ## Surface wood floor image
+    ## --- Build Room Walls (Decoration Layer) ---
+    left_wall = BackgroundDecoration(0, 150, room_img, width=40, height=350)
+    right_pillar = BackgroundDecoration(500, 150, room_img, width=60, height=200)
+    decorations.add(left_wall, right_pillar)
+
+    ## --- Physical Foundations ---
+    platforms.add(Platform(0, 500, 500, 100, color=(45, 25, 15))) 
     platforms.add(Platform(0, 500, 500, 30, image_path=wood_floor_img)) 
 
-    ## The door
-    door = Platform(500, 350, 40, 150, (139, 69, 19))
+    ## ✅ FIX: Use the SAME WOOD TEXTURE (room_img) for the door instead of the ugly pillar!
+    ## This makes it perfectly match the wall. We will draw a frame over it later.
+    door = Platform(500, 350, 60, 150, image_path=room_img)
     platforms.add(door)
     is_door_opened = False
     
-    ## --- Scene 2 & 3: Forest ---
-    ## Forest floor "foundation" (dark, cool, frozen ground)
     platforms.add(Platform(500, 520, 4000, 80, color=(30, 30, 40))) 
-    ## Surface snow floor tile on top
     platforms.add(Platform(500, 500, 4000, 30, image_path=snow_floor_img)) 
-    
-    ## Forest obstacles
     platforms.add(Platform(1000, 430, 120, 70, image_path=woods_platform_img))
     platforms.add(Platform(1500, 450, 150, 50, image_path=rock_img))
+
+    platforms.add(Platform(1900, 450, 150, 50, image_path=rock_img)) 
+    platforms.add(Platform(2000, 400, 120, 70, image_path=wood_platform2_img))
+    platforms.add(Platform(2200, 350, 120, 70, image_path=wood_platform_img)) 
+
+    platforms.add(Platform(2700, 450, 150, 50, image_path=rock_img))
+    platforms.add(Platform(2750, 400, 150, 50, image_path=wood_floor_img))
+    platforms.add(Platform(2800, 350, 150, 50, image_path=wood_platform3_img))
+
+    platforms.add(Platform(3300, 430, 120, 70, image_path=wood_platform_img))
+    platforms.add(Platform(3480, 430, 120, 70, image_path=woods_platform_img))
       
-    ## --- Initialize Snowflakes ---
+    ## --- Particle Systems & Trackers ---
     camera_scroll = 0
     chase_started = False
+    
     snowflakes = []
     for i in range(100):
-        x = random.randrange(0, SCREEN_WIDTH)
-        y = random.randrange(0, SCREEN_HEIGHT)
-        speed = random.randrange(1, 4)
-        size = random.randrange(1, 3)
-        snowflakes.append([x, y, speed, size])
+        snowflakes.append([random.randrange(0, SCREEN_WIDTH), random.randrange(0, SCREEN_HEIGHT), random.randrange(1, 4), random.randrange(1, 3)])
+
+    room_x = 0  
+    smoke_particles = [] 
 
     ## --- 4. MAIN GAME LOOP ---
     running = True
@@ -113,7 +125,7 @@ def run(screen):
 
         keys = pygame.key.get_pressed()
         
-        ## Auto-open door logic
+        ## Door opening & Camera Snap logic
         if not is_door_opened:
             interaction_area = player.rect.inflate(40, 0) 
             if interaction_area.colliderect(door.rect):
@@ -121,21 +133,35 @@ def run(screen):
                 is_door_opened = True
                 current_bg_color = BG_FOREST_COLOR 
                 pygame.mixer.music.stop()
-                ## Play door sound
                 if door_sfx:
-                    door_sfx.play() 
+                    door_sfx.play()
+
+                ## Camera Snap
+                snap_amount = 500
+                for p in platforms: p.rect.x -= snap_amount
+                for d in decorations: d.rect.x -= snap_amount
+                enemy.rect.x -= snap_amount
+                camera_scroll += snap_amount
+                
+                room_x -= snap_amount 
+                for smoke in smoke_particles: smoke[0] -= snap_amount
+                
+                player.rect.x = 100
 
         player.move(platforms)
 
-        ## Camera scrolling logic
+        ## Camera following logic
         if player.rect.right > SCREEN_WIDTH // 2:
             scroll_amount = player.rect.right - (SCREEN_WIDTH // 2)
             player.rect.right = SCREEN_WIDTH // 2 
             camera_scroll += scroll_amount
             
-            for p in platforms:
-                p.rect.x -= scroll_amount
+            for p in platforms: p.rect.x -= scroll_amount
+            for d in decorations: d.rect.x -= scroll_amount
             enemy.rect.x -= scroll_amount
+            
+            room_x -= scroll_amount
+            for smoke in smoke_particles: smoke[0] -= scroll_amount
 
         ## Enemy chase logic
         if camera_scroll > 1500:
@@ -144,53 +170,106 @@ def run(screen):
                 chase_started = True
             enemy.rect.x += 6 
 
-        ## Game over & restart logic
         if pygame.sprite.spritecollideany(player, enemies_group):
-            print("Caught by Krampus! Restarting Chapter 1...")
-            
-            ## 1. STOP the background music immediately!
             pygame.mixer.music.stop()
-            
-            ## 2. Play the jumpscare sound!
-            if jumpscare_sfx:
-                jumpscare_sfx.play()
-                
+            if jumpscare_sfx: jumpscare_sfx.play()
             try:
-                if hasattr(enemy, 'shriek'):
-                    enemy.shriek()
-            except:
-                pass
-            
-            ## Delay for 1.5 seconds so the player can hear the jumpscare
+                if hasattr(enemy, 'shriek'): enemy.shriek()
+            except: pass
             pygame.time.delay(1500) 
             return "CHAPTER1" 
 
-        ## Transition to Chapter 2
         if player.rect.y > SCREEN_HEIGHT + 100:
-            print("Player fell! Transitioning to Chapter 2...")
             pygame.mixer.music.stop() 
             return "CHAPTER2" 
 
         ## --- 5. RENDERING ---
-        screen.fill(current_bg_color) 
+        screen.fill(BG_FOREST_COLOR) 
         
-        if is_door_opened:
-            ## Draw the forest background with parallax scrolling
-            if bg_surface:
-                scroll_offset = (camera_scroll * 0.3) % SCREEN_WIDTH
-                screen.blit(bg_surface, (-scroll_offset, 0))
-                screen.blit(bg_surface, (-scroll_offset + SCREEN_WIDTH, 0))
+        ## Draw parallax background
+        if bg_surface:
+            scroll_offset = (camera_scroll * 0.3) % SCREEN_WIDTH
+            screen.blit(bg_surface, (-scroll_offset, 0))
+            screen.blit(bg_surface, (-scroll_offset + SCREEN_WIDTH, 0))
                 
-            ## Draw snowflakes
-            for flake in snowflakes:
-                flake[1] += flake[2] 
-                flake[0] += random.choice([-1, 0, 1]) 
-                if flake[1] > SCREEN_HEIGHT:
-                    flake[1] = random.randrange(-50, -10)
-                    flake[0] = random.randrange(0, SCREEN_WIDTH)
-                pygame.draw.circle(screen, (255, 255, 255), (flake[0], flake[1]), flake[3])
+        ## Draw snowflakes
+        for flake in snowflakes:
+            flake[1] += flake[2] 
+            flake[0] += random.choice([-1, 0, 1]) 
+            if flake[1] > SCREEN_HEIGHT:
+                flake[1] = random.randrange(-50, -10)
+                flake[0] = random.randrange(0, SCREEN_WIDTH)
+            pygame.draw.circle(screen, (255, 255, 255), (flake[0], flake[1]), flake[3])
         
+        ## 1. Draw wood walls (Decoration Group)
+        decorations.draw(screen)
+
+        ## --- 🏠 TRUE HOLLOW WALLS FOR WINDOWS ---
+        wall_color = (130, 95, 65) 
+        pygame.draw.rect(screen, wall_color, (room_x + 40, 150, 460, 30))
+        pygame.draw.rect(screen, wall_color, (room_x + 40, 470, 460, 30))
+        pygame.draw.rect(screen, wall_color, (room_x + 40, 180, 60, 290))
+        pygame.draw.rect(screen, wall_color, (room_x + 250, 180, 50, 290))
+        pygame.draw.rect(screen, wall_color, (room_x + 450, 180, 50, 290))
+
+        ## 2. 🪟 Draw transparent glass
+        glass_surface = pygame.Surface((150, 290), pygame.SRCALPHA)
+        glass_surface.fill((150, 200, 255, 25)) 
+        screen.blit(glass_surface, (room_x + 100, 180)) 
+        screen.blit(glass_surface, (room_x + 300, 180)) 
+        
+        ## Window frames
+        frame_color = (80, 50, 30) 
+        pygame.draw.rect(screen, frame_color, (room_x + 100, 180, 150, 290), 4)
+        pygame.draw.rect(screen, frame_color, (room_x + 300, 180, 150, 290), 4)
+        pygame.draw.line(screen, frame_color, (room_x + 175, 180), (room_x + 175, 470), 4)
+        pygame.draw.line(screen, frame_color, (room_x + 375, 180), (room_x + 375, 470), 4)
+        pygame.draw.line(screen, frame_color, (room_x + 100, 325), (room_x + 250, 325), 4)
+        pygame.draw.line(screen, frame_color, (room_x + 300, 325), (room_x + 450, 325), 4)
+
+        ## 3. Draw the chimney
+        pygame.draw.rect(screen, (70, 30, 30), (room_x + 380, 40, 40, 110))
+
+        ## 4. Draw the triangular roof
+        pygame.draw.polygon(screen, (50, 30, 20), [
+            (room_x - 50, 150),    
+            (room_x + 600, 150),   
+            (room_x + 275, 10)     
+        ])
+
+        ## 5. Generate and update smoke particles
+        if random.random() < 0.15: 
+            smoke_particles.append([room_x + 400, 30, 4]) 
+
+        for smoke in smoke_particles[:]:
+            smoke[0] += random.uniform(-0.5, 1.5) 
+            smoke[1] -= random.uniform(1, 2)      
+            smoke[2] += 0.3                       
+            
+            if smoke[1] < -50 or smoke[2] > 25:
+                smoke_particles.remove(smoke)
+            else:
+                pygame.draw.circle(screen, (120, 120, 120), (int(smoke[0]), int(smoke[1])), int(smoke[2]))
+
+        ## 6. Draw platforms, player, and enemy
         platforms.draw(screen)
+        
+        ## ✅ FIX: DRAW BEAUTIFUL DOOR DETAILS OVER THE DOOR PLATFORM
+        ## This only runs if the door hasn't been opened yet!
+        if not is_door_opened:
+            ## Add a semi-transparent dark shadow to make the door look recessed
+            door_shade = pygame.Surface((door.rect.width, door.rect.height), pygame.SRCALPHA)
+            door_shade.fill((0, 0, 0, 80)) ## 80 is the transparency (0-255)
+            screen.blit(door_shade, (door.rect.x, door.rect.y))
+            
+            ## Draw a thick, dark wood frame around the door
+            pygame.draw.rect(screen, (60, 35, 20), door.rect, 4)
+            
+            ## Draw a shiny golden doorknob on the left side
+            pygame.draw.circle(screen, (220, 180, 50), (door.rect.x + 15, door.rect.y + 80), 6)
+            ## Doorknob outline for extra detail
+            pygame.draw.circle(screen, (120, 80, 20), (door.rect.x + 15, door.rect.y + 80), 6, 2)
+
         player.draw(screen)
         enemy.draw(screen)
 
