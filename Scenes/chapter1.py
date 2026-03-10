@@ -40,22 +40,23 @@ def run(screen):
     ## --- 4. Build the Level (Platforms) ---
     platforms = pygame.sprite.Group()
     
-    ## Scene 1: Start Room Floor 
-    platforms.add(Platform(0, 500, 500, 100, (150, 150, 150))) 
-    
-    ## The Door (Blocks the player at x=500)
+    wood_floor_img = os.path.join("Assets", "wood_floor.png")
+    woods_platform_img = os.path.join("Assets", "woods_platform.png")
+    rock_img = os.path.join("Assets", "rock.png")
+
+    ## --- Scene 1:  ---
+    platforms.add(Platform(0, 500, 500, 100, image_path=wood_floor_img)) 
+
     door = Platform(500, 350, 40, 150, (139, 69, 19))
     platforms.add(door)
     is_door_opened = False
     
-    ## Scene 2 & 3: Forest Floor 
-    platforms.add(Platform(540, 500, 2000, 100, (34, 139, 34))) 
+    ## --- Scene 2 & 3:  ---
+    platforms.add(Platform(540, 500, 2000, 100, color=(34, 139, 34))) 
     
-    ## Scene 3: Obstacles (Rocks in the forest)
-    platforms.add(Platform(1000, 450, 60, 50, (128, 128, 128)))
-    platforms.add(Platform(1400, 420, 80, 80, (128, 128, 128)))
-    ## Fixed Rock 3: Made it shorter so it's jumpable! (Height 120 -> 80)
-    platforms.add(Platform(1800, 420, 50, 80, (128, 128, 128))) 
+    platforms.add(Platform(1000, 400, 160, 100, image_path=woods_platform_img))
+    
+    platforms.add(Platform(1500, 450, 150, 50, image_path=rock_img))
     
     ## Scene 4: Cliff (The forest floor ends at x=2540)
     camera_scroll = 0
