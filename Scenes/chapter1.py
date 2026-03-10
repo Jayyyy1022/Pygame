@@ -20,33 +20,54 @@ def run(screen):
 
     ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    ## --- Load Sounds ---
+    ## --- 1. Load Sounds ---
     pygame.mixer.init()
+    pygame.mixer.stop()
+    pygame.mixer.music.stop()
+    
+    ## Load door open sound
     try:
-        sound_path = os.path.join(ROOT_DIR, "Assets", "SFX", "jumpscare.wav")
-        jingle_sfx = pygame.mixer.Sound(sound_path) 
-        jingle_sfx.set_volume(0.2)
+        door_path = os.path.join(ROOT_DIR, "Assets", "SFX", "door_open.mp3")
+        door_sfx = pygame.mixer.Sound(door_path) 
+        door_sfx.set_volume(0.3)
     except:
-        jingle_sfx = None
+        door_sfx = None
 
-    ## --- Initialize Entities ---
+    ## Load jumpscare sound (Krampus catch)
+    try:
+        jumpscare_path = os.path.join(ROOT_DIR, "Assets", "SFX", "jumpscare.wav")
+        jumpscare_sfx = pygame.mixer.Sound(jumpscare_path)
+        jumpscare_sfx.set_volume(0.1)
+    except:
+        jumpscare_sfx = None
+
+    ## Load and play Room BGM (Loops infinitely)
+    try:
+        room_bgm_path = os.path.join(ROOT_DIR, "Assets", "SFX", "room_bgm.wav")
+        pygame.mixer.music.load(room_bgm_path)
+        pygame.mixer.music.set_volume(0.3)
+        pygame.mixer.music.play(-1) 
+    except:
+        print("Warning: Room BGM not found.")
+
+    ## --- 2. Initialize Entities ---
     player = Player.Player_Child(100, 300, 0.1, MOVEMENT_SPEED, GRAVITY)
     enemy = Enemy.Enemy_Krampus(-600, 400, 0.15, MOVEMENT_SPEED * 1.1, GRAVITY)
     enemies_group = pygame.sprite.Group()
     enemies_group.add(enemy)
 
-    ## --- Build the Level (Platforms) ---
+    ## --- 3. Build the Level (Platforms) ---
     platforms = pygame.sprite.Group()
     
     wood_floor_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "wood_floor.png")
     woods_platform_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "woods_platform.png")
     rock_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "rock.png")
+    snow_floor_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "snow_floor.png")
     
     ## Load forest background image
     forest_bg_img = os.path.join(ROOT_DIR, "Assets", "Miscellaneous", "forest_bg.png")
     try:
         bg_surface = pygame.image.load(forest_bg_img).convert_alpha()
-        ## Scale the background image to fit the screen
         bg_surface = pygame.transform.scale(bg_surface, (SCREEN_WIDTH, SCREEN_HEIGHT))
     except:
         bg_surface = None
@@ -63,8 +84,11 @@ def run(screen):
     is_door_opened = False
     
     ## --- Scene 2 & 3: Forest ---
-    ## Base forest floor
-    platforms.add(Platform(540, 500, 4000, 100, color=(34, 139, 34))) 
+    ## Forest floor "foundation" (dark, cool, frozen ground)
+    platforms.add(Platform(500, 520, 4000, 80, color=(30, 30, 40))) 
+    ## Surface snow floor tile on top
+    platforms.add(Platform(500, 500, 4000, 30, image_path=snow_floor_img)) 
+    
     ## Forest obstacles
     platforms.add(Platform(1000, 430, 120, 70, image_path=woods_platform_img))
     platforms.add(Platform(1500, 450, 150, 50, image_path=rock_img))
@@ -80,7 +104,7 @@ def run(screen):
         size = random.randrange(1, 3)
         snowflakes.append([x, y, speed, size])
 
-    ## --- MAIN GAME LOOP ---
+    ## --- 4. MAIN GAME LOOP ---
     running = True
     while running:
         for event in pygame.event.get():
@@ -96,8 +120,10 @@ def run(screen):
                 door.kill() 
                 is_door_opened = True
                 current_bg_color = BG_FOREST_COLOR 
-                if jingle_sfx:
-                    jingle_sfx.play() 
+                pygame.mixer.music.stop()
+                ## Play door sound
+                if door_sfx:
+                    door_sfx.play() 
 
         player.move(platforms)
 
@@ -121,28 +147,37 @@ def run(screen):
         ## Game over & restart logic
         if pygame.sprite.spritecollideany(player, enemies_group):
             print("Caught by Krampus! Restarting Chapter 1...")
+            
+            ## 1. STOP the background music immediately!
+            pygame.mixer.music.stop()
+            
+            ## 2. Play the jumpscare sound!
+            if jumpscare_sfx:
+                jumpscare_sfx.play()
+                
             try:
                 if hasattr(enemy, 'shriek'):
                     enemy.shriek()
             except:
                 pass
-            pygame.time.delay(1000) 
+            
+            ## Delay for 1.5 seconds so the player can hear the jumpscare
+            pygame.time.delay(1500) 
             return "CHAPTER1" 
 
         ## Transition to Chapter 2
         if player.rect.y > SCREEN_HEIGHT + 100:
             print("Player fell! Transitioning to Chapter 2...")
+            pygame.mixer.music.stop() 
             return "CHAPTER2" 
 
-        ## --- RENDERING ---
+        ## --- 5. RENDERING ---
         screen.fill(current_bg_color) 
         
         if is_door_opened:
             ## Draw the forest background with parallax scrolling
             if bg_surface:
-                ## 0.3 is the scroll ratio for parallax effect
                 scroll_offset = (camera_scroll * 0.3) % SCREEN_WIDTH
-                ## Draw two images side by side for infinite seamless scrolling
                 screen.blit(bg_surface, (-scroll_offset, 0))
                 screen.blit(bg_surface, (-scroll_offset + SCREEN_WIDTH, 0))
                 
