@@ -32,7 +32,8 @@ class Player_Child(pygame.sprite.Sprite):
         #self.isAlive = True
 
 
-    def move(self):
+## Added 'platforms' parameter to receive level obstacles
+    def move(self, platforms):
         keys = pygame.key.get_pressed()
         
         ## enter idle state when no key presses / Resetting speed
@@ -46,11 +47,9 @@ class Player_Child(pygame.sprite.Sprite):
 
         ## A - D Movement | Space for jump | K for run | J for interact
         if keys[pygame.K_a]:
-            #self.rect.x -= self.speed
             self.direction = -1
             self.facingRight = False
         if keys[pygame.K_d]:
-            #self.rect.x -= self.speed
             self.direction = 1
             self.facingRight = True
         if keys[pygame.K_k] and self.direction != 0:
@@ -81,18 +80,34 @@ class Player_Child(pygame.sprite.Sprite):
         self.velocityY += self.gravity
         if self.velocityY > 10:  ## limiting terminal velocity 
             self.velocityY = 10
+        
+        ## apply gravity to dy
         dy += self.velocityY
 
-        ## check collision with floor (FOR TEST SCENE)
-        if self.rect.bottom + dy > 500:
-            dy = 500 - self.rect.bottom
-            self.velocityY = 0
-            self.onGround = True
-            self.isJumping = False
-
-        ## update rect/player position
+        ## --- NEW DYNAMIC COLLISION DETECTION ---
+        
+        ## 1. X-axis collision
         self.rect.x += dx
+        for platform in platforms:
+            if platform.rect.colliderect(self.rect):
+                if dx > 0: # Moving right, hit left side of platform
+                    self.rect.right = platform.rect.left
+                if dx < 0: # Moving left, hit right side of platform
+                    self.rect.left = platform.rect.right
+
+        ## 2. Y-axis collision
         self.rect.y += dy
+        self.onGround = False # Reset ground state before checking
+        for platform in platforms:
+            if platform.rect.colliderect(self.rect):
+                if dy > 0: # Falling down, hit top of platform
+                    self.rect.bottom = platform.rect.top
+                    self.velocityY = 0
+                    self.onGround = True
+                    self.isJumping = False
+                elif dy < 0: # Jumping up, hit bottom of platform (ceiling)
+                    self.rect.top = platform.rect.bottom
+                    self.velocityY = 0
 
     def update_animation(self):
         ANIMATION_COOLDOWN = 100

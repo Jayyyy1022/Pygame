@@ -3,6 +3,7 @@ import pygame
 from Entities.Player import player_child as Player
 from Entities.Enemy import enemy_krampus as Enemy
 from Scenes import testscene
+from Scenes import chapter1
 
 ## Screen size
 SCREEN_WIDTH = 800
@@ -37,6 +38,9 @@ enemy = Enemy.Enemy_Krampus(ENEMY_X, ENEMY_Y, ENEMY_SIZE_SCALE, MOVEMENT_SPEED, 
 obstacles = pygame.sprite.Group()
 obstacles.add(enemy)
 
+## <-- ADD THIS: Initialize Chapter 1 level before the loop
+current_level = chapter1.Chapter1()
+
 ## set framrate
 clock = pygame.time.Clock()
 FPS = 60
@@ -44,6 +48,9 @@ FPS = 60
 running = True
 while running:
     testscene.drawBG(screen)
+
+    ## Draw chapter 1 platforms on the screen
+    current_level.draw(screen)
 
     for event in pygame.event.get():
         ## Quit game
@@ -56,9 +63,12 @@ while running:
         #     moving_right = True
 
     player.draw(screen)
-    player.move()
+    player.move(current_level.platforms)
 
     enemy.draw(screen)
+
+    ## Update chapter 1 logic (camera scrolling and enemy chase)
+    current_level.update(player, enemy, SCREEN_WIDTH)
 
     ##collsion sound test
     anyCollision =  pygame.sprite.spritecollideany(player, obstacles)
