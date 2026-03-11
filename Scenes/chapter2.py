@@ -419,7 +419,7 @@ def scene4():
             return
         
 # ---------------- MAIN ----------------
-scene4()
+scene1()
 
 pygame.quit()
 sys.exit()
