@@ -166,9 +166,20 @@ def run(screen):
         ## Enemy chase logic
         if camera_scroll > 1500:
             if not chase_started:
-                enemy.rect.x = -150 
+                enemy.rect.x = -200 
+                enemy.rect.y = player.rect.y - 150 
                 chase_started = True
-            enemy.rect.x += 6 
+            
+            ## Homing Logi
+            if enemy.rect.centerx < player.rect.centerx:
+                enemy.rect.x += 5  
+            elif enemy.rect.centerx > player.rect.centerx:
+                enemy.rect.x -= 3
+    
+            if enemy.rect.centery < player.rect.centery:
+                enemy.rect.y += 2  
+            elif enemy.rect.centery > player.rect.centery:
+                enemy.rect.y -= 2  
 
         if pygame.sprite.spritecollideany(player, enemies_group):
             pygame.mixer.music.stop()

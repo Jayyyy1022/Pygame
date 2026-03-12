@@ -1,7 +1,7 @@
 import pygame
 import sys
 from Scenes import chapter1
-## from Scenes import chapter2
+from Scenes import chapter2
 
 ## Screen size
 SCREEN_WIDTH = 800
@@ -20,9 +20,8 @@ while True:
         current_scene = chapter1.run(screen)
         
     elif current_scene == "CHAPTER2":
-        ## current_scene = chapter2.run(screen)
-        print("Transitioning to Chapter 2! (Teammate's file will run here)")
-        break ## Stop for now since chapter 2 isn't ready
+        current_scene = chapter2.run(screen)
+        
         
     elif current_scene == "QUIT":
         break
