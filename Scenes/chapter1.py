@@ -1,6 +1,11 @@
 import pygame
 import os
+import sys
+import subprocess
 import random
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+                
 from Entities.Player import player_child as Player
 from Entities.Enemy import enemy_krampus as Enemy
 from Entities.Obstacle.platform import Platform
@@ -83,7 +88,6 @@ def run(screen):
     platforms.add(Platform(0, 500, 500, 100, color=(45, 25, 15))) 
     platforms.add(Platform(0, 500, 500, 30, image_path=wood_floor_img)) 
 
-    ## ✅ FIX: Use the SAME WOOD TEXTURE (room_img) for the door instead of the ugly pillar!
     ## This makes it perfectly match the wall. We will draw a frame over it later.
     door = Platform(500, 350, 60, 150, image_path=room_img)
     platforms.add(door)
@@ -170,7 +174,7 @@ def run(screen):
                 enemy.rect.y = player.rect.y - 150 
                 chase_started = True
             
-            ## Homing Logi
+            ## Homing Logic (Enemy follows player smoothly)
             if enemy.rect.centerx < player.rect.centerx:
                 enemy.rect.x += 5  
             elif enemy.rect.centerx > player.rect.centerx:
@@ -190,9 +194,20 @@ def run(screen):
             pygame.time.delay(1500) 
             return "CHAPTER1" 
 
+        ## --- Transition to Chapter 2 when player falls ---
         if player.rect.y > SCREEN_HEIGHT + 100:
+            print("Player fell! Transitioning to Chapter 2...")
             pygame.mixer.music.stop() 
-            return "CHAPTER2" 
+            
+            ## 1. Quit the current Chapter 1 window
+            pygame.quit() 
+            
+            ## 2. Locate and launch teammate's chapter2.py
+            chapter2_path = os.path.join(ROOT_DIR, "Scenes", "chapter2.py")
+            subprocess.run([sys.executable, chapter2_path])
+            
+            ## 3. Exit this script completely once Chapter 2 finishes
+            sys.exit()
 
         ## --- 5. RENDERING ---
         screen.fill(BG_FOREST_COLOR) 
@@ -215,7 +230,7 @@ def run(screen):
         ## 1. Draw wood walls (Decoration Group)
         decorations.draw(screen)
 
-        ## --- 🏠 TRUE HOLLOW WALLS FOR WINDOWS ---
+        ## --- TRUE HOLLOW WALLS FOR WINDOWS ---
         wall_color = (130, 95, 65) 
         pygame.draw.rect(screen, wall_color, (room_x + 40, 150, 460, 30))
         pygame.draw.rect(screen, wall_color, (room_x + 40, 470, 460, 30))
@@ -223,7 +238,7 @@ def run(screen):
         pygame.draw.rect(screen, wall_color, (room_x + 250, 180, 50, 290))
         pygame.draw.rect(screen, wall_color, (room_x + 450, 180, 50, 290))
 
-        ## 2. 🪟 Draw transparent glass
+        ## 2. Draw transparent glass
         glass_surface = pygame.Surface((150, 290), pygame.SRCALPHA)
         glass_surface.fill((150, 200, 255, 25)) 
         screen.blit(glass_surface, (room_x + 100, 180)) 
@@ -265,7 +280,6 @@ def run(screen):
         ## 6. Draw platforms, player, and enemy
         platforms.draw(screen)
         
-        ## ✅ FIX: DRAW BEAUTIFUL DOOR DETAILS OVER THE DOOR PLATFORM
         ## This only runs if the door hasn't been opened yet!
         if not is_door_opened:
             ## Add a semi-transparent dark shadow to make the door look recessed
@@ -286,3 +300,11 @@ def run(screen):
 
         pygame.display.flip()
         clock.tick(FPS)
+
+## --- Allow chapter1.py to be run as a standalone script ---
+if __name__ == "__main__":
+    pygame.init()
+    screen = pygame.display.set_mode((800, 600))
+    pygame.display.set_caption("Chiristmas Alone - Chapter 1")
+    run(screen)
+    pygame.quit()
