@@ -28,6 +28,7 @@ ice_cave_bg3 = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Ice_ca
 ice_cave_bg3 = pygame.transform.scale(ice_cave_bg3, (WIDTH, HEIGHT))
 sign = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Wooden_Sign.png")).convert_alpha()
 sign = pygame.transform.scale(sign, (40, 60))
+cave_platform = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Cave_platforms_1.png")).convert_alpha()
 
 # ---------------- GLOBAL TORCH ----------------
 light_radius = 200
@@ -91,11 +92,14 @@ def draw_krampus_danger(player, krampus):
 
 
 # ---------------- SCENE 1 ----------------
-def scene1():
+def scene1(spawn_drop=True):
 
     global light_radius
 
-    player = Player(120, -50, 0.1, 4, 0.5)
+    if spawn_drop:
+        player = Player(120, -50, 0.1, 4, 0.5)  # falling spawn
+    else:
+        player = Player(120, 430, 0.1, 4, 0.5)  # normal ground spawn
 
     platforms = [
         Platform(0, 500, WIDTH, 100)
@@ -172,10 +176,10 @@ def scene2():
     player = Player(10, 430, 0.1, 4, 0.5)
 
     platforms = [
-        Platform(0, 500, 150, 20),
-        Platform(300, 420, 200, 20),
-        Platform(650, 500, 150, 20),
-        Platform(650, 200, 150, 20),
+        Platform(0, 500, 150, 50),
+        Platform(300, 420, 200, 50),
+        Platform(650, 500, 150, 50),
+        Platform(650, 200, 150, 50),
         Platform(0, 0, 0, 0),  # Placeholder
         Platform(0, 0, 0, 0)  # Placeholder
     ]
@@ -193,11 +197,16 @@ def scene2():
                 sys.exit()
 
         player.move(platforms)
+        
+        if player.rect.top >= HEIGHT:
+            scene1(False)
+            return
 
         screen.blit(ice_cave_bg2, (0, 0))
 
         for p in platforms:
             screen.blit(p.image, p.rect)
+            p.image = pygame.transform.scale(cave_platform, (p.rect.width, p.rect.height))
 
         draw_player_with_light(player)
         
