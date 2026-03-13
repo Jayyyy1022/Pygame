@@ -1,11 +1,13 @@
 import pygame
 import sys
+import random
 
 from Entities.Obstacle import platform
 from Entities.Decoration import prop
 from Entities.Player import player_child
 from Entities.Enemy import enemy_krampus
 from Scenes import game_state_manager
+from Scenes import particles
 
 ## Game variables
 GROUND_Y = 550
@@ -19,6 +21,7 @@ BLIZZARD_NIGHT = (24, 29, 74)
 BROWN_FLOOR = (115, 65, 41)
 RED_OBJECT = (210, 34, 21)
 PRESENT_COLOR = (150, 20, 240)
+WINDOW_GLASS_COLOR = (200, 230, 255)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
@@ -50,6 +53,8 @@ window = pygame.Rect((LEFT_WALL_X + 210), 240, 220, 200)
 christmas_tree = pygame.Rect((RIGHT_WALL_X - 245), (GROUND_Y - 300), 180, 300)
 door = pygame.Rect((RIGHT_WALL_X - 15), (GROUND_Y - 175), 15, 175)
 present = pygame.Rect((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50)
+
+window_glass = pygame.Surface((window.width, window.height))
 
 props = pygame.sprite.Group()
 # props.add(platform.Platform((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50, PRESENT_COLOR)) ## present
@@ -104,6 +109,16 @@ class Chapter3:
             {"name": "door", "rect": door, "hint": "[J] Open", "text": "There's nobody outside.", "sound": interact_sound, "position": ((door.x - 25), (door.y - 10))}
         ]
 
+        self.doorParticles = []
+        self.isDoorBroken = False
+        self.starSparkles = []
+        self.starSparkles.append(particles.Sparkle((christmas_tree.centerx + 4), (christmas_tree.top - 8))) ## have to change the pos so that it matches assets ltr
+        self.starSparkles.append(particles.Sparkle((christmas_tree.centerx + 7), (christmas_tree.top - 4)))
+        self.starSparkles.append(particles.Sparkle((christmas_tree.centerx - 6), (christmas_tree.top - 1)))
+        self.snowParticles = []
+        for _ in range(200):
+            self.snowParticles.append(particles.Snow(800, 600, 2, -4))
+
         self.start_time = pygame.time.get_ticks()
         self.trigger_delay = 5000 # seconds delay b4 knocking phase
         self.knocking_interval = 3000 # 3 seconds between knocks
@@ -114,14 +129,11 @@ class Chapter3:
         self.inching_timer = 0
         self.black_bar_height = 0
         self.red_filter_alpha = 0
-        self.krampus = None
+        self.krampus = enemy_krampus.Enemy_Krampus((door.centerx + 70), door.centery, 0.2, 2)
 
         self.player_target_x = 0
         self.enemy_target_x = 0
         self.move_speed = 2 # Speed of smooth movement during inching
-
-        # self.platforms = pygame.sprite.Group()
-        # self.platforms.add(platform.Platform(-50, GROUND_Y, 900, 120, BROWN_FLOOR))
 
         self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
         self.platforms = pygame.sprite.Group()
@@ -148,6 +160,12 @@ class Chapter3:
                 self.last_knock_time = current_time
             
         elif self.state == "BREAKING":
+            if not self.doorParticles and not self.isDoorBroken:
+                self.isDoorBroken = True
+                for _ in range(50):
+                    spawn_y = random.randint(door.top, door.bottom)
+                    self.doorParticles.append(particles.Splinter(door.left, spawn_y, (150, 210)))
+
             self.knockingChannel.stop()
             self.interactChannel.stop()
             
@@ -168,7 +186,9 @@ class Chapter3:
                 self.state = "INCHING"
                 self.inching_timer = current_time
 
-                self.krampus = enemy_krampus.Enemy_Krampus(door.centerx, door.centery, 0.2, 2)
+                if self.krampus.rect.x > door.x:
+                    self.krampus.rect.x -= self.move_speed
+
                 self.player_target_x = self.player.rect.x
                 self.enemy_target_x = self.krampus.rect.x
 
@@ -185,12 +205,13 @@ class Chapter3:
                 self.enemy_target_x = self.krampus.rect.x - (move_dist + 20) ## krampus will be slightly faster
                 self.inching_timer = current_time
                 
-                if self.inching_count >= 3:
+                if self.inching_count >= 4:
                     self.state = "RUSH"
                     self.inching_timer = current_time
 
         elif self.state == "RUSH":
             self.horrorTensionChannel.fadeout(1000)
+            self.player.rect.x -= 2
             self.krampus.rect.x -= 15
             if self.krampus.rect.colliderect(self.player.rect):
                 self.state = "BLACKOUT"
@@ -223,6 +244,12 @@ class Chapter3:
             if self.krampus:
                 self.krampus.draw(self.display)
             self.draw_vfx()
+        
+        for particle in self.doorParticles[:]:
+            particle.update()
+            particle.draw(self.display)
+            if particle.life <= 0:
+                self.doorParticles.remove(particle)
 
         ## self.player.isCutscene = True ## need to set this too true during final jumpscare
         # if not self.player.isCutscene:
@@ -273,24 +300,31 @@ class Chapter3:
 
     def draw_room(self):
         self.display.fill(BLIZZARD_NIGHT)
-
         self.play_bgm(0, 4000)
 
-        # pygame.draw.rect(self.display, BROWN_FLOOR, floor)
-        # self.draw_props_rect(BROWN_FLOOR, left_wall)
-        # self.draw_props_rect(BROWN_FLOOR, right_wall)
+        ## snow thru window
+        self.display.set_clip(window) 
+        for snow in self.snowParticles:
+            snow.update()
+            snow.draw(self.display)
+        self.display.set_clip(None)
+
+        window_glass.set_alpha(85)
+        window_glass.fill(WINDOW_GLASS_COLOR)
+        self.display.blit(window_glass, (window.x, window.y))
 
         self.platforms.draw(self.display)
-        # props.draw(self.display)
-
         self.draw_props_rect(BROWN_FLOOR, ceiling)
         self.draw_props_rect(RED_OBJECT, bed)
-        self.draw_props_rect(RED_OBJECT, window)
+        # self.draw_props_rect(RED_OBJECT, window)
         self.draw_props_rect(RED_OBJECT, christmas_tree)
         self.draw_props_rect(PRESENT_COLOR, present)
         if self.state not in ["BREAKING", "INCHING", "RUSH"]:
             self.draw_props_rect(RED_OBJECT, door)
 
+        for sparkle in self.starSparkles:
+            sparkle.update()
+            sparkle.draw(self.display)
 
     # def object_interactions(self, interactedObject, x, y, interactText, hintText = default_hint):
     #     if self.player.rect.colliderect(interactedObject):
