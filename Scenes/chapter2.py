@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from Entities.Player.player_child import Player_Child as Player
 from Entities.Obstacle.platform import Platform
+from Entities.Enemy.enemy_krampus import Enemy_Krampus as Krampus
 
 pygame.init()
 
@@ -19,7 +20,7 @@ font = pygame.font.SysFont(None, 30)
 
 # ---------------- GLOBAL TORCH ----------------
 light_radius = 200
-dim_speed = 1
+dim_speed = 100
 
 
 # ---------------- LIGHT SYSTEM ----------------
@@ -136,13 +137,15 @@ def scene2():
 
     global light_radius
 
-    player = Player(120, -50, 0.1, 4, 0.5)
+    player = Player(10, 430, 0.1, 4, 0.5)
 
     platforms = [
         Platform(0, 500, 150, 20),
         Platform(300, 420, 200, 20),
         Platform(650, 500, 150, 20),
-        Platform(650, 200, 150, 20)
+        Platform(650, 200, 150, 20),
+        Platform(0, 0, 0, 0),  # Placeholder
+        Platform(0, 0, 0, 0)  # Placeholder
     ]
 
     running = True
@@ -187,10 +190,15 @@ def scene3():
         Platform(0, 500, WIDTH, 100)
     ]
 
-    monster_size = 40
-    monster_x = player.rect.x - 200
-    monster_y = -50
+    krampus = Krampus(player.rect.x, -50, 0.2, 2, 0.5)
+
     monster_speed = 150
+
+    # --- Spawn delay ---
+    spawn_delay = 0.8
+    spawn_timer = 0
+    krampus_active = False
+    krampus_on_ground = False
 
     running = True
 
@@ -206,40 +214,79 @@ def scene3():
 
         player.move(platforms)
 
-        if monster_y < 460:
-            monster_y += 900 * dt
+        # --- Spawn timer ---
+        spawn_timer += dt
 
-        else:
+        if spawn_timer >= spawn_delay:
+            krampus_active = True
 
-            if monster_x < player.rect.x:
-                monster_x += monster_speed * dt
+        # --- Krampus behaviour ---
+        if krampus_active:
 
-            if monster_x > player.rect.x:
-                monster_x -= monster_speed * dt
+            # --- Falling ---
+            if not krampus_on_ground:
 
+                krampus.rect.y += 900 * dt
+
+                for p in platforms:
+
+                    if krampus.rect.bottom >= p.rect.top:
+                        krampus.rect.bottom = p.rect.top
+                        krampus_on_ground = True
+
+            # --- Chase after landing ---
+            else:
+
+                if krampus.rect.x < player.rect.x:
+                    krampus.rect.x += monster_speed * dt
+                    krampus.facingRight = True
+
+                elif krampus.rect.x > player.rect.x:
+                    krampus.rect.x -= monster_speed * dt
+                    krampus.facingRight = False
+
+        # --- Draw background ---
         screen.fill((40, 40, 40))
 
         for p in platforms:
             screen.blit(p.image, p.rect)
 
+        # --- Ceiling light cone ---
+        cone_points = [(80, 0), (160, 0), (250, HEIGHT), (0, HEIGHT)]
+        cone_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+
+        pygame.draw.polygon(cone_surface, (255, 255, 200, 120), cone_points)
+
+        screen.blit(cone_surface, (0, 0))
+        pygame.draw.rect(screen, (0, 0, 0), (80, 0, 80, 20))
+
+        # --- Player torch ---
         draw_player_with_light(player)
 
-        monster_rect = pygame.Rect(monster_x, monster_y, monster_size, monster_size)
-        pygame.draw.rect(screen, (200, 50, 50), monster_rect)
+        # --- Draw Krampus ---
+        if krampus_active:
+            krampus.draw(screen)
 
-        if player.rect.colliderect(monster_rect):
+        # --- Collision ---
+        if krampus_active and player.rect.colliderect(krampus.rect):
+
+            krampus.shriek()
 
             text = font.render("You were caught...", True, (255, 0, 0))
             screen.blit(text, (WIDTH // 2 - 100, HEIGHT // 2))
+
             pygame.display.update()
             pygame.time.delay(2000)
+
             return
 
+        # --- Torch dim ---
         if light_radius > 10:
             light_radius -= dim_speed * dt
 
         pygame.display.update()
 
+        # --- Scene transition ---
         if player.rect.right >= WIDTH:
             scene4()
             return
@@ -308,7 +355,7 @@ def scene4():
 
 
 # ---------------- START ----------------
-scene1()
+scene3()
 
 pygame.quit()
 sys.exit()
