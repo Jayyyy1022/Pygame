@@ -33,7 +33,7 @@ class Game:
             pygame.display.flip()
             self.clock.tick(FPS)
 
-
+# ignore these, placeholder for testing
 class Level:
     def __init__(self, display, gameStateManager):
         self.display = display
