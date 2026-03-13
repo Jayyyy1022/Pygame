@@ -28,6 +28,9 @@ class Player_Child(pygame.sprite.Sprite):
         self.onGround = False
         self.action = 0  
 
+        self.isAlive = True
+        self.isCutscene = False
+
     def move(self, platforms):
         keys = pygame.key.get_pressed()
         
@@ -43,7 +46,7 @@ class Player_Child(pygame.sprite.Sprite):
         if keys[pygame.K_d]:
             self.direction = 1
             self.facingRight = True
-        if keys[pygame.K_k] or keys[pygame.K_LSHIFT]: 
+        if (keys[pygame.K_k] or keys[pygame.K_LSHIFT]) and self.direction != 0: 
             self.isRunning = True
             self.speedMultiplier = 2
         if keys[pygame.K_SPACE] and self.onGround:
