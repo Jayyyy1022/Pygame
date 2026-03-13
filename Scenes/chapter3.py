@@ -23,7 +23,7 @@ WHITE = (255, 255, 255)
 ## Music
 pygame.mixer.init()
 pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
-pygame.mixer.music.set_volume(0.15) ## bgm
+pygame.mixer.music.set_volume(0.1) ## bgm
 
 interact_sound = pygame.mixer.Sound("Assets\\SFX\\interact_sound.mp3")
 interact_sound.set_volume(0.7)
@@ -71,7 +71,7 @@ default_hint = "[J] Interact"
 present_text = "Merry Christmas! ~Mom and Dad"
 window_text = "I can't reach the windowsill..."
 tree_text = "I wonder how they got this tree in."
-bed_text = "I'd rather stay awake for now..."
+bed_text = "        I'd rather stay awake for now..."
 
 # room_objects = pygame.sprite.OrderedUpdates(bed, christmas_tree) ## no particular order ## use ordered updates 
 
@@ -79,14 +79,15 @@ class Chapter3:
     def __init__(self, display, gameStateManager):
         self.display = display
         self.gameStateManager = gameStateManager
-        self.isColliding = False
+        self.activeInteractable = None
         self.interactableDialogue = False
+
         self.interactables = [
-            {"rect": present, "hint": "[J] Open", "text": present_text, "sound": interact_sound, "position": ((present.x + 25), (present.y - 10))},
-            {"rect": window, "hint": "[J] Look outside", "text": window_text, "sound": interact_sound, "position": ((window.x + 110), (window.y - 10))},
-            {"rect": christmas_tree, "hint": default_hint, "text": tree_text, "sound": interact_sound, "position": ((christmas_tree.x + 90), (christmas_tree.y - 10))},
-            {"rect": bed, "hint": "[J] Sleep", "text": bed_text, "sound": interact_sound, "position": ((bed.x + 105), (bed.y - 10))},
-            {"rect": door, "hint": "[J] Open", "text": "Who's there?", "sound": knocking_door, "position": ((door.x - 25), (door.y - 10))}
+            {"name": "present", "rect": present, "hint": "[J] Open", "text": present_text, "sound": interact_sound, "position": ((present.x + 25), (present.y - 10))},
+            {"name": "window", "rect": window, "hint": "[J] Look outside", "text": window_text, "sound": interact_sound, "position": ((window.x + 110), (window.y - 10))},
+            {"name": "tree", "rect": christmas_tree, "hint": default_hint, "text": tree_text, "sound": interact_sound, "position": ((christmas_tree.x + 90), (christmas_tree.y - 10))},
+            {"name": "bed", "rect": bed, "hint": "[J] Sleep", "text": bed_text, "sound": interact_sound, "position": ((bed.x + 85), (bed.y - 10))},
+            {"name": "door", "rect": door, "hint": "[J] Open", "text": "Who's there?", "sound": knocking_door, "position": ((door.x - 25), (door.y - 10))}
         ]
 
         # self.platforms = pygame.sprite.Group()
@@ -101,27 +102,37 @@ class Chapter3:
 
         ## self.player.isCutscene = True ## need to set this too true during final jumpscare
         if not self.player.isCutscene:
-            active_obj = None
+            current_touching_object = None
             for obj in self.interactables:
                 if self.player.rect.colliderect(obj["rect"]):
-                    active_obj = obj
+                    current_touching_object = obj
                     break
-            if not active_obj:
+            if current_touching_object:
+                if self.activeInteractable != current_touching_object["rect"]:
+                    self.interactableDialogue = False
+                    self.activeInteractable = None
+            else:
                 self.interactableDialogue = False
+                self.activeInteractable = None
 
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_f:
                         self.gameStateManager.set_state("level")
                         pygame.mixer.music.fadeout(1000)
-                    if event.key == pygame.K_j and active_obj:
+                    if event.key == pygame.K_j and current_touching_object:
                         if not self.interactableDialogue:
-                            active_obj["sound"].play()
+                            current_touching_object["sound"].play()
                         self.interactableDialogue = True
+                        self.activeInteractable = current_touching_object["rect"]
             
-            if active_obj:
-                display_text = active_obj["text"] if self.interactableDialogue else active_obj["hint"]
-                self.draw_text(display_text, WHITE, active_obj["position"][0], active_obj["position"][1])
+            if current_touching_object:
+                if self.interactableDialogue and self.activeInteractable == current_touching_object["rect"]:
+                    display_text = current_touching_object["text"]
+                else:
+                    display_text = current_touching_object["hint"]
+                    
+                self.draw_text(display_text, WHITE, current_touching_object["position"][0], current_touching_object["position"][1])
 
         # self.object_interactions(present, (RIGHT_WALL_X - 255), (GROUND_Y - 80),  present_text)
         # self.object_interactions(window, 345, 260, window_text)
