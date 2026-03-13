@@ -33,8 +33,11 @@ def draw_player_with_light(player):
     center = player.rect.center
     pygame.draw.circle(darkness, (0, 0, 0, 0), center, int(light_radius))
 
+
     screen.blit(darkness, (0, 0))
 
+
+# ---------------- SCENE 1 ----------------
 
 # ---------------- SCENE 1 ----------------
 def scene1():
@@ -50,13 +53,16 @@ def scene1():
     sign_rect = pygame.Rect(380, 440, 40, 60)
     show_dialogue = False
 
+
     running = True
 
     while running:
 
+
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
+
 
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -68,6 +74,7 @@ def scene1():
                     if player.rect.colliderect(sign_rect):
                         show_dialogue = not show_dialogue
 
+        player.move(platforms)
         player.move(platforms)
 
         screen.fill((40, 40, 40))
@@ -107,6 +114,7 @@ def scene1():
         pygame.display.update()
 
         if player.rect.right >= WIDTH:
+        if player.rect.right >= WIDTH:
             scene2()
             return
 
@@ -125,9 +133,11 @@ def scene2():
         Platform(650, 200, 150, 20)
     ]
 
+
     running = True
 
     while running:
+
 
         dt = clock.tick(60) / 1000
 
@@ -136,6 +146,8 @@ def scene2():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
+        player.move(platforms)
 
         player.move(platforms)
 
@@ -170,20 +182,24 @@ def scene3():
     monster_size = 40
     monster_x = player.rect.x - 200
     monster_y = -50
-    monster_speed = 150
+    monster_speed = 2
 
     running = True
 
+
     while running:
+
 
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
 
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
+        player.move(platforms)
         player.move(platforms)
 
         if monster_y < 460:
@@ -221,6 +237,7 @@ def scene3():
         pygame.display.update()
 
         if player.rect.right >= WIDTH:
+        if player.rect.right >= WIDTH:
             scene4()
             return
 
@@ -240,14 +257,17 @@ def scene4():
 
     while running:
 
+
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
+
 
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
+        player.move(platforms)
         player.move(platforms)
 
         screen.fill((30, 30, 30))
