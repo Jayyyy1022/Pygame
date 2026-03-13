@@ -114,7 +114,6 @@ def scene1():
         pygame.display.update()
 
         if player.rect.right >= WIDTH:
-        if player.rect.right >= WIDTH:
             scene2()
             return
 
@@ -237,7 +236,6 @@ def scene3():
         pygame.display.update()
 
         if player.rect.right >= WIDTH:
-        if player.rect.right >= WIDTH:
             scene4()
             return
 
@@ -308,7 +306,7 @@ def scene4():
 
 
 # ---------------- START ----------------
-scene2()
+scene1()
 
 pygame.quit()
 sys.exit()
