@@ -23,10 +23,13 @@ WHITE = (255, 255, 255)
 ## Music
 pygame.mixer.init()
 pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
-pygame.mixer.music.set_volume(0.2) ## bgm
+pygame.mixer.music.set_volume(0.15) ## bgm
 
 interact_sound = pygame.mixer.Sound("Assets\\SFX\\interact_sound.mp3")
 interact_sound.set_volume(0.7)
+
+knocking_door = pygame.mixer.Sound("Assets\\SFX\\knocking_door.mp3")
+knocking_door.set_volume(0.7)
 
 ## placeholder props
 floor = pygame.Rect(-50, GROUND_Y, 900, 120)
@@ -41,8 +44,12 @@ door = pygame.Rect((RIGHT_WALL_X - 15), (GROUND_Y - 175), 15, 175)
 
 present = pygame.Rect((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50)
 
-# props = pygame.sprite.Group()
-# props.add(prop.BackgroundDecoration((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50))
+props = pygame.sprite.Group()
+# props.add(platform.Platform((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50, PRESENT_COLOR)) ## present
+# props.add(platform.Platform(LEFT_WALL_X, (GROUND_Y - 80), 170, 80, RED_OBJECT)) ## bed
+# props.add(platform.Platform((LEFT_WALL_X + 210), 240, 220, 200, RED_OBJECT)) ## window
+# props.add(platform.Platform((RIGHT_WALL_X - 245), (GROUND_Y - 300), 180, 300, RED_OBJECT)) ## tree
+# props.add(platform.Platform((RIGHT_WALL_X - 15), (GROUND_Y - 175), 15, 175, RED_OBJECT)) ## door
 
 ## platforms and walls
 platforms = pygame.sprite.Group()
@@ -58,10 +65,13 @@ PLAYER_SIZE_SCALE = 0.1
 
 ## Fonts and Text
 pygame.font.init()
-font = pygame.font.SysFont(None, 30)
+font = pygame.font.SysFont(None, 25)
 
-hint = "Press J to interact"
-present_text = "Merry Christmas!"
+default_hint = "[J] Interact"
+present_text = "Merry Christmas! ~Mom and Dad"
+window_text = "I can't reach the windowsill..."
+tree_text = "I wonder how they got this tree in."
+bed_text = "I'd rather stay awake for now..."
 
 # room_objects = pygame.sprite.OrderedUpdates(bed, christmas_tree) ## no particular order ## use ordered updates 
 
@@ -69,7 +79,15 @@ class Chapter3:
     def __init__(self, display, gameStateManager):
         self.display = display
         self.gameStateManager = gameStateManager
+        self.isColliding = False
         self.interactableDialogue = False
+        self.interactables = [
+            {"rect": present, "hint": "[J] Open", "text": present_text, "sound": interact_sound, "position": ((present.x + 25), (present.y - 10))},
+            {"rect": window, "hint": "[J] Look outside", "text": window_text, "sound": interact_sound, "position": ((window.x + 110), (window.y - 10))},
+            {"rect": christmas_tree, "hint": default_hint, "text": tree_text, "sound": interact_sound, "position": ((christmas_tree.x + 90), (christmas_tree.y - 10))},
+            {"rect": bed, "hint": "[J] Sleep", "text": bed_text, "sound": interact_sound, "position": ((bed.x + 105), (bed.y - 10))},
+            {"rect": door, "hint": "[J] Open", "text": "Who's there?", "sound": knocking_door, "position": ((door.x - 25), (door.y - 10))}
+        ]
 
         # self.platforms = pygame.sprite.Group()
         # self.platforms.add(platform.Platform(-50, GROUND_Y, 900, 120, BROWN_FLOOR))
@@ -80,23 +98,35 @@ class Chapter3:
     def run(self, events):
 
         self.draw_scene_house_final()
-        
-        for event in events:
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_f:
-                    self.gameStateManager.set_state("level")
-                    pygame.mixer.music.fadeout(1000)
-                if event.key == pygame.K_j and self.player.rect.colliderect(present):
-                    interact_sound.play(0)
-                    self.interactableDialogue = True
-        
-        if self.player.rect.colliderect(present):
-            if self.interactableDialogue:
-                self.draw_text(present_text, WHITE, (RIGHT_WALL_X - 255), (GROUND_Y - 80))
-            else:
-                self.draw_text(hint, WHITE, (RIGHT_WALL_X - 255), (GROUND_Y - 80))
-        else:
-            self.interactableDialogue = False
+
+        ## self.player.isCutscene = True ## need to set this too true during final jumpscare
+        if not self.player.isCutscene:
+            active_obj = None
+            for obj in self.interactables:
+                if self.player.rect.colliderect(obj["rect"]):
+                    active_obj = obj
+                    break
+            if not active_obj:
+                self.interactableDialogue = False
+
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_f:
+                        self.gameStateManager.set_state("level")
+                        pygame.mixer.music.fadeout(1000)
+                    if event.key == pygame.K_j and active_obj:
+                        if not self.interactableDialogue:
+                            active_obj["sound"].play()
+                        self.interactableDialogue = True
+            
+            if active_obj:
+                display_text = active_obj["text"] if self.interactableDialogue else active_obj["hint"]
+                self.draw_text(display_text, WHITE, active_obj["position"][0], active_obj["position"][1])
+
+        # self.object_interactions(present, (RIGHT_WALL_X - 255), (GROUND_Y - 80),  present_text)
+        # self.object_interactions(window, 345, 260, window_text)
+        # self.object_interactions(christmas_tree, 620, (GROUND_Y - 320), tree_text)
+        # self.object_interactions(bed, (LEFT_WALL_X + 85), (GROUND_Y - 100), bed_text)
             
 
         self.player.draw(self.display)
@@ -116,6 +146,7 @@ class Chapter3:
         # self.draw_props_rect(BROWN_FLOOR, right_wall)
 
         platforms.draw(self.display)
+        # props.draw(self.display)
 
         self.draw_props_rect(BROWN_FLOOR, ceiling)
         self.draw_props_rect(RED_OBJECT, bed)
@@ -124,13 +155,23 @@ class Chapter3:
         self.draw_props_rect(RED_OBJECT, door)
         self.draw_props_rect(PRESENT_COLOR, present)
 
-    
+
+    # def object_interactions(self, interactedObject, x, y, interactText, hintText = default_hint):
+    #     if self.player.rect.colliderect(interactedObject):
+    #         if self.interactableDialogue:
+    #             self.draw_text(interactText, WHITE, x, y)
+    #         else:
+    #             self.draw_text(hintText, WHITE, x, y)
+    #     else:
+    #         self.interactableDialogue = False
+
 
     def draw_props_rect(self, color, dimensions):
         pygame.draw.rect(self.display, color, dimensions)
 
+
     def draw_text(self, text, color, x, y):
-        text_surface = font.render(text, False, color)
+        text_surface = font.render(text, True, color)
         text_rect = text_surface.get_rect()
         text_rect.midbottom = (x, y)
         self.display.blit(text_surface, text_rect)
