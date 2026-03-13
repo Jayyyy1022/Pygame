@@ -23,12 +23,13 @@ class Game:
 
     def run(self):
         while True:
-            for event in pygame.event.get():
+            events = pygame.event.get()
+            for event in events:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
 
-            self.states[self.gameStateManager.get_state()].run()    
+            self.states[self.gameStateManager.get_state()].run(events)    
 
             pygame.display.flip()
             self.clock.tick(FPS)
@@ -39,7 +40,7 @@ class Level:
         self.display = display
         self.gameStateManager = gameStateManager
     
-    def run(self):
+    def run(self, event):
         self.display.fill("blue")
         keys = pygame.key.get_pressed()
         if keys[pygame.K_e]:
@@ -51,7 +52,7 @@ class Start:
         self.display = display
         self.gameStateManager = gameStateManager
     
-    def run(self):
+    def run(self, event):
         self.display.fill("red")
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a]:
