@@ -102,18 +102,21 @@ class Chapter3:
         # pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
         # pygame.mixer.music.set_volume(0.1) ## bgm
         self.interact_sound = pygame.mixer.Sound("Assets\\SFX\\interact_sound.mp3")
-        self.interact_sound.set_volume(0.7)
+        self.interact_sound.set_volume(0.65)
         self.knocking_door = pygame.mixer.Sound("Assets\\SFX\\knocking_door.mp3")
         self.knocking_door.set_volume(0.7)
         self.jumpscare_sound = pygame.mixer.Sound("Assets\\SFX\\jumpscare.wav")
         self.jumpscare_sound.set_volume(0.4)
         self.tension_horror_buildup = pygame.mixer.Sound("Assets\\SFX\\horror_tension_buildup.mp3")
         self.tension_horror_buildup.set_volume(0.4)
+        self.door_breaking_sound = pygame.mixer.Sound("Assets\\SFX\\door_breaking.flac")
+        self.door_breaking_sound.set_volume(0.6)
 
         self.interactChannel = pygame.mixer.Channel(0)
         self.knockingChannel = pygame.mixer.Channel(1)
         self.horrorTensionChannel = pygame.mixer.Channel(2)
         self.jumpscareChannel = pygame.mixer.Channel(3)
+        self.doorbreakingChannel = pygame.mixer.Channel(4)
 
         self.floor = pygame.Rect(-50, GROUND_Y, 900, 120)
         self.left_wall = pygame.Rect(-10, -50, 35, 600)
@@ -181,7 +184,7 @@ class Chapter3:
         self.isDoorBroken = False
 
         pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
-        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.set_volume(0.18)
 
         self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
         self.krampus = enemy_krampus.Enemy_Krampus((self.door.centerx + 70), self.door.centery, 0.2, 2)
@@ -348,6 +351,7 @@ class Chapter3:
                     self.activeInteractable = current_touching_object["rect"]
                     if self.activeInteractable == self.door and self.state == "KNOCKING":
                         self.state = "BREAKING"
+                        self.doorbreakingChannel.play(self.door_breaking_sound)
                         self.horrorTensionChannel.play(self.tension_horror_buildup)
                         self.player.isCutscene = True
 
