@@ -3,273 +3,376 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from Entities.Player.player_child import Player_Child as Player
+from Entities.Enemy.enemy_krampus import Enemy_Krampus as Krampus
+from Entities.Obstacle.platform import Platform
+
 
 pygame.init()
 
 # ---------------- SETTINGS ----------------
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Christmas Alone - Chapter 2")
+pygame.display.set_caption("Chapter 2")
 clock = pygame.time.Clock()
 
-# ---------------- ASSETS ----------------
-player_size = 40
-player_image = pygame.image.load(os.path.join("Assets", "Player", "player_idle.png")).convert_alpha()
-player_image = pygame.transform.scale(player_image, (player_size, player_size))
 font = pygame.font.SysFont(None, 30)
 
-# ---------------- GLOBAL VARIABLES ----------------
-light_radius = 200      # universal torch radius
-dim_speed = 0.5         # universal dim speed
+# ---------------- ASSETS ----------------
+ice_cave_bg = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Ice_cave_1.png")).convert()
+ice_cave_bg = pygame.transform.scale(ice_cave_bg, (WIDTH, HEIGHT))
+ice_cave_bg2 = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Ice_cave_2.png")).convert_alpha()
+ice_cave_bg2 = pygame.transform.scale(ice_cave_bg2, (WIDTH, HEIGHT))
+ice_cave_bg3 = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Ice_cave_exit.png")).convert_alpha()
+ice_cave_bg3 = pygame.transform.scale(ice_cave_bg3, (WIDTH, HEIGHT))
+sign = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Wooden_Sign.png")).convert_alpha()
+sign = pygame.transform.scale(sign, (40, 60))
 
-# ---------------- UTILITY FUNCTIONS ----------------
-def update_player(player_x, player_y, velocity_y, dt, speed=200, gravity=900, ground_y=460):
-    """Handles player movement, input, and gravity."""
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_a]:
-        player_x -= speed * dt
-    if keys[pygame.K_d]:
-        player_x += speed * dt
-    if keys[pygame.K_w] and player_y >= ground_y:
-        velocity_y = -500
+# ---------------- GLOBAL TORCH ----------------
+light_radius = 200
+dim_speed = 1.5
 
-    player_x = max(0, min(WIDTH - player_size, player_x))
 
-    # gravity
-    velocity_y += gravity * dt
-    player_y += velocity_y * dt
-
-    if player_y >= ground_y:
-        player_y = ground_y
-        velocity_y = 0
-
-    return player_x, player_y, velocity_y
-
-def draw_player_with_light(player_x, player_y):
-    """Draws player and surrounding darkness using universal light_radius."""
-    screen.blit(player_image, (player_x, player_y))
-    darkness = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-    darkness.fill((0, 0, 0, 180))
-    center = (player_x + player_size // 2, player_y + player_size // 2)
-    pygame.draw.circle(darkness, (0, 0, 0, 0), center, int(light_radius))
-    screen.blit(darkness, (0, 0))
-
-# ---------------- SCENES ----------------
-def scene1():
+# ---------------- LIGHT SYSTEM ----------------
+def draw_player_with_light(player):
     global light_radius
-    player_x, player_y = 120, -50
-    velocity_y = 0
-    ground_y = 460
+
+    player.draw(screen)
+
+    darkness = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+
+    center = player.rect.center
+
+    # ---- Flicker based on torch size ----
+    min_radius = 20
+    max_radius = 200
+
+    # normalize radius
+    radius_ratio = max(0, min(1, (light_radius - min_radius) / (max_radius - min_radius)))
+    
+    # darker environment when torch is weak
+    darkness_alpha = 220 - (radius_ratio * 120)
+
+    darkness = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    darkness.fill((0, 0, 0, int(darkness_alpha)))
+
+    # flicker speed increases as light gets smaller
+    flicker_speed = 5 + (1 - radius_ratio) * 25
+
+    flicker = (pygame.time.get_ticks() * flicker_speed / 1000) % 8 - 4
+
+    radius = max(10, light_radius + flicker)
+    
+    if light_radius < 40 and pygame.time.get_ticks() % 500 < 40:
+        radius = 5
+
+    pygame.draw.circle(darkness, (0, 0, 0, 0), center, int(radius))
+
+    screen.blit(darkness, (0, 0))
+    
+# ---------------- KRAMPUS DANGER ----------------
+def draw_krampus_danger(player, krampus):
+
+    # distance between player and krampus
+    distance = abs(player.rect.centerx - krampus.rect.centerx)
+
+    danger_range = 200
+
+    if distance < danger_range:
+
+        # stronger red when closer
+        intensity = int((1 - distance / danger_range) * 120)
+
+        red_overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        red_overlay.fill((255, 0, 0, intensity))
+
+        screen.blit(red_overlay, (0, 0))
+
+
+# ---------------- SCENE 1 ----------------
+def scene1():
+
+    global light_radius
+
+    player = Player(120, -50, 0.1, 4, 0.5)
+
+    platforms = [
+        Platform(0, 500, WIDTH, 100)
+    ]
+
     sign_rect = pygame.Rect(380, 440, 40, 60)
     show_dialogue = False
+
     running = True
 
     while running:
+
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
-                player_rect = pygame.Rect(player_x, player_y, player_size, player_size)
-                if player_rect.colliderect(sign_rect):
-                    show_dialogue = not show_dialogue
 
-        # Update player
-        player_x, player_y, velocity_y = update_player(player_x, player_y, velocity_y, dt, ground_y=ground_y)
+            if event.type == pygame.KEYDOWN:
 
-        # Draw background
-        screen.fill((40, 40, 40))
-        pygame.draw.rect(screen, (70, 50, 30), (0, 500, WIDTH, 100))  # ground
+                if event.key == pygame.K_e:
+                    if player.rect.colliderect(sign_rect):
+                        show_dialogue = not show_dialogue
 
-        # Scene-specific light cone
+        player.move(platforms)
+
+        screen.blit(ice_cave_bg, (0, 0))
+
+        for p in platforms:
+            screen.blit(p.image, p.rect)
+
+        screen.blit(sign, sign_rect)
+        
         cone_points = [(80, 0), (160, 0), (250, HEIGHT), (0, HEIGHT)]
+        
         cone_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-        pygame.draw.polygon(cone_surface, (255, 255, 200, 120), cone_points)
+        
+        pygame.draw.polygon(
+            cone_surface,
+            (255, 255, 200, 120),
+            cone_points)
+        
         screen.blit(cone_surface, (0, 0))
-        pygame.draw.rect(screen, (0, 0, 0), (80, 0, 80, 20))
 
-        # Sign
-        pygame.draw.rect(screen, (200, 180, 100), sign_rect)
+        draw_player_with_light(player)
 
-        # Player + darkness
-        draw_player_with_light(player_x, player_y)
+        if player.rect.colliderect(sign_rect):
 
-        # Interaction hint
-        if pygame.Rect(player_x, player_y, player_size, player_size).colliderect(sign_rect):
             hint = font.render("Press E", True, (255, 255, 255))
             screen.blit(hint, (sign_rect.x - 10, sign_rect.y - 30))
 
-        # Dialogue
         if show_dialogue:
-            dialogue = font.render("Escape before the light fades.", True, (255, 255, 255))
-            screen.blit(dialogue, (player_x - 120, player_y - 40))
 
-        # Universal torch dim
+            text = font.render("Escape before the light fades.", True, (255, 255, 255))
+            screen.blit(text, (player.rect.x - 120, player.rect.y - 40))
+
         if light_radius > 10:
             light_radius -= dim_speed * dt
 
         pygame.display.update()
 
-        # Next scene
-        if player_x + player_size >= WIDTH:
+        if player.rect.right >= WIDTH:
             scene2()
             return
 
+
+# ---------------- SCENE 2 PLATFORM LEVEL ----------------
 def scene2():
+
     global light_radius
-    player_x, player_y = 50, 500
-    velocity_y = 0
-    ground_y = 580
+
+    player = Player(10, 430, 0.1, 4, 0.5)
+
     platforms = [
-        pygame.Rect(0, 200, 150, 20),
-        pygame.Rect(650, 200, 150, 20),
-        pygame.Rect(650, 400, 150, 20)
+        Platform(0, 500, 150, 20),
+        Platform(300, 420, 200, 20),
+        Platform(650, 500, 150, 20),
+        Platform(650, 200, 150, 20),
+        Platform(0, 0, 0, 0),  # Placeholder
+        Platform(0, 0, 0, 0)  # Placeholder
     ]
+
     running = True
 
     while running:
+
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        # Update player
-        player_x, player_y, velocity_y = update_player(player_x, player_y, velocity_y, dt, ground_y=ground_y)
+        player.move(platforms)
 
-        # Platform collisions
-        player_rect = pygame.Rect(player_x, player_y, player_size, player_size)
-        for plat in platforms:
-            if player_rect.colliderect(plat) and velocity_y >= 0:
-                player_y = plat.top - player_size
-                velocity_y = 0
+        screen.blit(ice_cave_bg2, (0, 0))
 
-        # Draw background & platforms
-        screen.fill((50, 50, 100))
-        for plat in platforms:
-            pygame.draw.rect(screen, (150, 100, 50), plat)
+        for p in platforms:
+            screen.blit(p.image, p.rect)
 
-        # Player + darkness
-        draw_player_with_light(player_x, player_y)
-
-        # Universal torch dim
+        draw_player_with_light(player)
+        
         if light_radius > 10:
             light_radius -= dim_speed * dt
 
         pygame.display.update()
 
+        if player.rect.right >= WIDTH:
+            scene3()
+            return
+
+
+# ---------------- SCENE 3 MONSTER CHASE ----------------
 def scene3():
+
     global light_radius
-    player_x, player_y = 100, -50
-    velocity_y = 0
-    ground_y = 460
-    monster_size = 40
-    monster_x = player_x - 100
-    monster_y = -50
+
+    player = Player(10, 430, 0.1, 4, 0.5)
+
+    platforms = [
+        Platform(0, 500, WIDTH, 100)
+    ]
+
+    krampus = Krampus(player.rect.x, -50, 0.2, 2, 0.5)
+
     monster_speed = 150
 
+    # --- Spawn delay ---
+    spawn_delay = 0.5
+    spawn_timer = 0
+    krampus_active = False
+    krampus_on_ground = False
+
     running = True
+
     while running:
+
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        # Player update
-        player_x, player_y, velocity_y = update_player(player_x, player_y, velocity_y, dt, ground_y=ground_y)
+        player.move(platforms)
 
-        # Monster falling & chasing
-        if monster_y < ground_y:
-            monster_y += 900 * dt
-        else:
-            if monster_x < player_x:
-                monster_x += monster_speed * dt
-            elif monster_x > player_x:
-                monster_x -= monster_speed * dt
+        # --- Spawn timer ---
+        spawn_timer += dt
 
-        # Draw
-        screen.fill((40, 40, 40))
-        pygame.draw.rect(screen, (70, 50, 30), (0, 500, WIDTH, 100))  # ground
+        if spawn_timer >= spawn_delay:
+            krampus_active = True
 
-        # Scene-specific light cone
-        cone_points = [(80, 0), (160, 0), (250, HEIGHT), (0, HEIGHT)]
-        cone_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-        pygame.draw.polygon(cone_surface, (255, 255, 200, 120), cone_points)
-        screen.blit(cone_surface, (0, 0))
-        pygame.draw.rect(screen, (0, 0, 0), (80, 0, 80, 20))
+        # --- Krampus behaviour ---
+        if krampus_active:
 
-        # Player + darkness
-        draw_player_with_light(player_x, player_y)
+            # --- Falling ---
+            if not krampus_on_ground:
 
-        # Monster
-        monster_rect = pygame.Rect(monster_x, monster_y, monster_size, monster_size)
-        pygame.draw.rect(screen, (200, 50, 50), monster_rect)
+                krampus.rect.y += 900 * dt
 
-        # Universal torch dim
+                for p in platforms:
+
+                    if krampus.rect.bottom >= p.rect.top:
+                        krampus.rect.bottom = p.rect.top
+                        krampus_on_ground = True
+
+            # --- Chase after landing ---
+            else:
+
+                if krampus.rect.x < player.rect.x:
+                    krampus.rect.x += monster_speed * dt
+                    krampus.facingRight = True
+
+                elif krampus.rect.x > player.rect.x:
+                    krampus.rect.x -= monster_speed * dt
+                    krampus.facingRight = False
+
+        # --- Draw background ---
+        screen.blit(ice_cave_bg2, (0, 0))
+
+        for p in platforms:
+            screen.blit(p.image, p.rect)
+        
+        # --- Player torch ---
+        draw_player_with_light(player)
+
+        # --- Draw Krampus ---
+        if krampus_active:
+            krampus.draw(screen)
+            draw_krampus_danger(player, krampus)
+
+        # --- Collision ---
+        if krampus_active and player.rect.colliderect(krampus.rect):
+
+            text = font.render("You were caught...", True, (255, 0, 0))
+            screen.blit(text, (WIDTH // 2 - 100, HEIGHT // 2))
+
+            pygame.display.update()
+            pygame.time.delay(2000)
+
+            return
+
+        # --- Torch dim ---
         if light_radius > 10:
             light_radius -= dim_speed * dt
 
         pygame.display.update()
 
-        # Next scene
-        if player_x + player_size >= WIDTH:
+        # --- Scene transition ---
+        if player.rect.right >= WIDTH:
             scene4()
             return
 
+
+# ---------------- SCENE 4 EXIT ----------------
 def scene4():
+
     global light_radius
-    player_x, player_y = 50, 460
-    velocity_y = 0
-    ground_y = 460
+
+    player = Player(10, 430, 0.1, 4, 0.5)
+
+    platforms = [
+        Platform(0, 500, WIDTH, 100)
+    ]
+
     running = True
 
     while running:
+
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        # Player update
-        player_x, player_y, velocity_y = update_player(player_x, player_y, velocity_y, dt, ground_y=ground_y)
+        player.move(platforms)
 
-        # Draw background
-        screen.fill((30, 30, 30))
-        pygame.draw.rect(screen, (70, 50, 30), (0, 500, WIDTH, 100))  # ground
+        screen.blit(ice_cave_bg3, (0, 0))
 
-        # Scene-specific light cone
-        cone_points = [
-            (WIDTH, 100),
-            (WIDTH-100, 0),
-            (WIDTH-200, HEIGHT),
-            (WIDTH, HEIGHT-100)
-        ]
+        for p in platforms:
+            screen.blit(p.image, p.rect)
+
         cone_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-        pygame.draw.polygon(cone_surface, (255, 255, 200, 120), cone_points)
+
+        pygame.draw.polygon(
+            cone_surface,
+            (255, 255, 200, 120),
+            [
+                (WIDTH, 100),
+                (WIDTH - 100, 0),
+                (WIDTH - 200, HEIGHT),
+                (WIDTH, HEIGHT - 100)
+            ]
+        )
+
         screen.blit(cone_surface, (0, 0))
 
-        # Player + darkness
-        draw_player_with_light(player_x, player_y)
+        draw_player_with_light(player)
 
-        # Universal torch dim
         if light_radius > 10:
             light_radius -= dim_speed * dt
 
         pygame.display.update()
 
-        # Exit through light cone
-        if player_x + player_size >= WIDTH-200:
-            print("Player exited through the light! Scene complete!")
+        if player.rect.right >= WIDTH:
+            ##Credits or next chapter here
             return
 
-# ---------------- MAIN ----------------
+
+# ---------------- START ----------------
 scene1()
+
 pygame.quit()
 sys.exit()
