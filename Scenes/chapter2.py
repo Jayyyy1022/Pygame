@@ -19,11 +19,12 @@ font = pygame.font.SysFont(None, 30)
 
 # ---------------- GLOBAL TORCH ----------------
 light_radius = 200
-dim_speed = 10
+dim_speed = 1
 
 
 # ---------------- LIGHT SYSTEM ----------------
 def draw_player_with_light(player):
+    global light_radius
 
     player.draw(screen)
 
@@ -31,13 +32,28 @@ def draw_player_with_light(player):
     darkness.fill((0, 0, 0, 180))
 
     center = player.rect.center
-    pygame.draw.circle(darkness, (0, 0, 0, 0), center, int(light_radius))
 
+    # ---- Flicker based on torch size ----
+    min_radius = 20
+    max_radius = 200
+
+    # normalize radius
+    radius_ratio = max(0, min(1, (light_radius - min_radius) / (max_radius - min_radius)))
+
+    # flicker speed increases as light gets smaller
+    flicker_speed = 5 + (1 - radius_ratio) * 25
+
+    flicker = (pygame.time.get_ticks() * flicker_speed / 1000) % 8 - 4
+
+    radius = max(10, light_radius + flicker)
+    
+    if light_radius < 40 and pygame.time.get_ticks() % 500 < 40:
+        radius = 5
+
+    pygame.draw.circle(darkness, (0, 0, 0, 0), center, int(radius))
 
     screen.blit(darkness, (0, 0))
 
-
-# ---------------- SCENE 1 ----------------
 
 # ---------------- SCENE 1 ----------------
 def scene1():
@@ -53,16 +69,13 @@ def scene1():
     sign_rect = pygame.Rect(380, 440, 40, 60)
     show_dialogue = False
 
-
     running = True
 
     while running:
 
-
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
-
 
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -75,7 +88,6 @@ def scene1():
                         show_dialogue = not show_dialogue
 
         player.move(platforms)
-        player.move(platforms)
 
         screen.fill((40, 40, 40))
 
@@ -84,17 +96,18 @@ def scene1():
 
         pygame.draw.rect(screen, (200, 180, 100), sign_rect)
         
-        # LIGHT CONE
         cone_points = [(80, 0), (160, 0), (250, HEIGHT), (0, HEIGHT)]
         
         cone_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         
-        pygame.draw.polygon(cone_surface, (255, 255, 200, 120), cone_points)
+        pygame.draw.polygon(
+            cone_surface,
+            (255, 255, 200, 120),
+            cone_points)
         
         screen.blit(cone_surface, (0, 0))
-
+        
         pygame.draw.rect(screen, (0, 0, 0), (80, 0, 80, 20))
-
 
         draw_player_with_light(player)
 
@@ -123,7 +136,7 @@ def scene2():
 
     global light_radius
 
-    player = Player(50, 480, 0.1, 4, 0.5)
+    player = Player(120, -50, 0.1, 4, 0.5)
 
     platforms = [
         Platform(0, 500, 150, 20),
@@ -132,11 +145,9 @@ def scene2():
         Platform(650, 200, 150, 20)
     ]
 
-
     running = True
 
     while running:
-
 
         dt = clock.tick(60) / 1000
 
@@ -145,8 +156,6 @@ def scene2():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-
-        player.move(platforms)
 
         player.move(platforms)
 
@@ -172,7 +181,7 @@ def scene3():
 
     global light_radius
 
-    player = Player(50, 460, 0.1, 4, 0.5)
+    player = Player(120, -50, 0.1, 4, 0.5)
 
     platforms = [
         Platform(0, 500, WIDTH, 100)
@@ -181,24 +190,20 @@ def scene3():
     monster_size = 40
     monster_x = player.rect.x - 200
     monster_y = -50
-    monster_speed = 2
+    monster_speed = 150
 
     running = True
 
-
     while running:
-
 
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
 
-
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        player.move(platforms)
         player.move(platforms)
 
         if monster_y < 460:
@@ -245,7 +250,7 @@ def scene4():
 
     global light_radius
 
-    player = Player(50, 460, 0.1, 4, 0.5)
+    player = Player(120, -50, 0.1, 4, 0.5)
 
     platforms = [
         Platform(0, 500, WIDTH, 100)
@@ -255,17 +260,14 @@ def scene4():
 
     while running:
 
-
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
-
 
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        player.move(platforms)
         player.move(platforms)
 
         screen.fill((30, 30, 30))
