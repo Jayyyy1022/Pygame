@@ -22,6 +22,8 @@ font = pygame.font.SysFont(None, 30)
 # ---------------- ASSETS ----------------
 ice_cave_bg = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Ice_cave_1.png")).convert()
 ice_cave_bg = pygame.transform.scale(ice_cave_bg, (WIDTH, HEIGHT))
+ice_cave_bg2 = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Ice_cave_2.png")).convert_alpha()
+ice_cave_bg2 = pygame.transform.scale(ice_cave_bg2, (WIDTH, HEIGHT))
 
 # ---------------- GLOBAL TORCH ----------------
 light_radius = 200
@@ -102,7 +104,7 @@ def scene1():
 
         pygame.draw.rect(screen, (200, 180, 100), sign_rect)
         
-        cone_points = [(120, 0), (160, 0), (250, HEIGHT), (0, HEIGHT)]
+        cone_points = [(80, 0), (160, 0), (250, HEIGHT), (0, HEIGHT)]
         
         cone_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         
@@ -165,13 +167,13 @@ def scene2():
 
         player.move(platforms)
 
-        screen.fill((50, 50, 100))
+        screen.blit(ice_cave_bg2, (0, 0))
 
         for p in platforms:
             screen.blit(p.image, p.rect)
 
         draw_player_with_light(player)
-
+        
         if light_radius > 10:
             light_radius -= dim_speed * dt
 
@@ -187,7 +189,7 @@ def scene3():
 
     global light_radius
 
-    player = Player(120, -50, 0.1, 4, 0.5)
+    player = Player(10, 430, 0.1, 4, 0.5)
 
     platforms = [
         Platform(0, 500, WIDTH, 100)
@@ -249,20 +251,11 @@ def scene3():
                     krampus.facingRight = False
 
         # --- Draw background ---
-        screen.fill((40, 40, 40))
+        screen.blit(ice_cave_bg2, (0, 0))
 
         for p in platforms:
             screen.blit(p.image, p.rect)
-
-        # --- Ceiling light cone ---
-        cone_points = [(80, 0), (160, 0), (250, HEIGHT), (0, HEIGHT)]
-        cone_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-
-        pygame.draw.polygon(cone_surface, (255, 255, 200, 120), cone_points)
-
-        screen.blit(cone_surface, (0, 0))
-        pygame.draw.rect(screen, (0, 0, 0), (80, 0, 80, 20))
-
+        
         # --- Player torch ---
         draw_player_with_light(player)
 
@@ -272,8 +265,6 @@ def scene3():
 
         # --- Collision ---
         if krampus_active and player.rect.colliderect(krampus.rect):
-
-            krampus.shriek()
 
             text = font.render("You were caught...", True, (255, 0, 0))
             screen.blit(text, (WIDTH // 2 - 100, HEIGHT // 2))
