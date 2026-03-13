@@ -26,37 +26,37 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
 ## Music
-pygame.mixer.init()
-pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
-pygame.mixer.music.set_volume(0.1) ## bgm
+# pygame.mixer.init()
+# pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
+# pygame.mixer.music.set_volume(0.1) ## bgm
 
-interact_sound = pygame.mixer.Sound("Assets\\SFX\\interact_sound.mp3")
-interact_sound.set_volume(0.7)
+# interact_sound = pygame.mixer.Sound("Assets\\SFX\\interact_sound.mp3")
+# interact_sound.set_volume(0.7)
 
-knocking_door = pygame.mixer.Sound("Assets\\SFX\\knocking_door.mp3")
-knocking_door.set_volume(0.7)
+# knocking_door = pygame.mixer.Sound("Assets\\SFX\\knocking_door.mp3")
+# knocking_door.set_volume(0.7)
 
-jumpscare_sound = pygame.mixer.Sound("Assets\\SFX\\jumpscare.wav")
-jumpscare_sound.set_volume(0.4)
+# jumpscare_sound = pygame.mixer.Sound("Assets\\SFX\\jumpscare.wav")
+# jumpscare_sound.set_volume(0.4)
 
-tension_horror_buildup = pygame.mixer.Sound("Assets\\SFX\\horror_tension_buildup.mp3")
-tension_horror_buildup.set_volume(0.4)
+# tension_horror_buildup = pygame.mixer.Sound("Assets\\SFX\\horror_tension_buildup.mp3")
+# tension_horror_buildup.set_volume(0.4)
 
 ## placeholder props
-floor = pygame.Rect(-50, GROUND_Y, 900, 120)
-left_wall = pygame.Rect(-10, -50, 35, 600)
-right_wall = pygame.Rect(775, -50, 35, 600)
-ceiling = pygame.Rect(-50, -50, 900, 80)
+# floor = pygame.Rect(-50, GROUND_Y, 900, 120)
+# left_wall = pygame.Rect(-10, -50, 35, 600)
+# right_wall = pygame.Rect(775, -50, 35, 600)
+# ceiling = pygame.Rect(-50, -50, 900, 80)
 
-bed = pygame.Rect(LEFT_WALL_X, (GROUND_Y - 80), 170, 80)
-window = pygame.Rect((LEFT_WALL_X + 210), 240, 220, 200)
-christmas_tree = pygame.Rect((RIGHT_WALL_X - 245), (GROUND_Y - 300), 180, 300)
-door = pygame.Rect((RIGHT_WALL_X - 15), (GROUND_Y - 175), 15, 175)
-present = pygame.Rect((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50)
+# bed = pygame.Rect(LEFT_WALL_X, (GROUND_Y - 80), 170, 80)
+# window = pygame.Rect((LEFT_WALL_X + 210), 240, 220, 200)
+# christmas_tree = pygame.Rect((RIGHT_WALL_X - 245), (GROUND_Y - 300), 180, 300)
+# door = pygame.Rect((RIGHT_WALL_X - 15), (GROUND_Y - 175), 15, 175)
+# present = pygame.Rect((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50)
 
-window_glass = pygame.Surface((window.width, window.height))
+# window_glass = pygame.Surface((window.width, window.height))
 
-props = pygame.sprite.Group()
+# props = pygame.sprite.Group()
 # props.add(platform.Platform((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50, PRESENT_COLOR)) ## present
 # props.add(platform.Platform(LEFT_WALL_X, (GROUND_Y - 80), 170, 80, RED_OBJECT)) ## bed
 # props.add(platform.Platform((LEFT_WALL_X + 210), 240, 220, 200, RED_OBJECT)) ## window
@@ -76,8 +76,8 @@ PLAYER_SIZE_SCALE = 0.1
 ## player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
 
 ## Fonts and Text
-pygame.font.init()
-font = pygame.font.SysFont(None, 25)
+# pygame.font.init()
+# font = pygame.font.SysFont(None, 25)
 
 default_hint = "[J] Interact"
 present_text = "Merry Christmas! ~Mom and Dad"
@@ -91,58 +91,117 @@ class Chapter3:
     def __init__(self, display, gameStateManager):
         self.display = display
         self.gameStateManager = gameStateManager
-        self.activeInteractable = None
-        self.interactableDialogue = False
+        self.isInitialized = False
+        # self.activeInteractable = None
+        # self.interactableDialogue = False
+        pygame.font.init()
         self.font = pygame.font.SysFont(None, 25)
         self.large_font = pygame.font.SysFont(None, 50)
+
+        pygame.mixer.init()
+        # pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
+        # pygame.mixer.music.set_volume(0.1) ## bgm
+        self.interact_sound = pygame.mixer.Sound("Assets\\SFX\\interact_sound.mp3")
+        self.interact_sound.set_volume(0.7)
+        self.knocking_door = pygame.mixer.Sound("Assets\\SFX\\knocking_door.mp3")
+        self.knocking_door.set_volume(0.7)
+        self.jumpscare_sound = pygame.mixer.Sound("Assets\\SFX\\jumpscare.wav")
+        self.jumpscare_sound.set_volume(0.4)
+        self.tension_horror_buildup = pygame.mixer.Sound("Assets\\SFX\\horror_tension_buildup.mp3")
+        self.tension_horror_buildup.set_volume(0.4)
 
         self.interactChannel = pygame.mixer.Channel(0)
         self.knockingChannel = pygame.mixer.Channel(1)
         self.horrorTensionChannel = pygame.mixer.Channel(2)
         self.jumpscareChannel = pygame.mixer.Channel(3)
 
+        self.floor = pygame.Rect(-50, GROUND_Y, 900, 120)
+        self.left_wall = pygame.Rect(-10, -50, 35, 600)
+        self.right_wall = pygame.Rect(775, -50, 35, 600)
+        self.ceiling = pygame.Rect(-50, -50, 900, 80)
+
+        self.bed = pygame.Rect(LEFT_WALL_X, (GROUND_Y - 80), 170, 80)
+        self.window = pygame.Rect((LEFT_WALL_X + 210), 240, 220, 200)
+        self.christmas_tree = pygame.Rect((RIGHT_WALL_X - 245), (GROUND_Y - 300), 180, 300)
+        self.door = pygame.Rect((RIGHT_WALL_X - 15), (GROUND_Y - 175), 15, 175)
+        self.present = pygame.Rect((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50)
+
+        self.window_glass = pygame.Surface((self.window.width, self.window.height))
+
         self.interactables = [
-            {"name": "present", "rect": present, "hint": "[J] Open", "text": present_text, "sound": interact_sound, "position": ((present.x + 25), (present.y - 10))},
-            {"name": "window", "rect": window, "hint": "[J] Look outside", "text": window_text, "sound": interact_sound, "position": ((window.x + 110), (window.y - 10))},
-            {"name": "tree", "rect": christmas_tree, "hint": default_hint, "text": tree_text, "sound": interact_sound, "position": ((christmas_tree.x + 90), (christmas_tree.y - 10))},
-            {"name": "bed", "rect": bed, "hint": "[J] Sleep", "text": bed_text, "sound": interact_sound, "position": ((bed.x + 85), (bed.y - 10))},
-            {"name": "door", "rect": door, "hint": "[J] Open", "text": "There's nobody outside.", "sound": interact_sound, "position": ((door.x - 25), (door.y - 10))}
+            {"name": "present", "rect": self.present, "hint": "[J] Open", "text": present_text, "sound": self.interact_sound, "position": ((self.present.x + 25), (self.present.y - 10))},
+            {"name": "window", "rect": self.window, "hint": "[J] Look outside", "text": window_text, "sound": self.interact_sound, "position": ((self.window.x + 110), (self.window.y - 10))},
+            {"name": "tree", "rect": self.christmas_tree, "hint": default_hint, "text": tree_text, "sound": self.interact_sound, "position": ((self.christmas_tree.x + 90), (self.christmas_tree.y - 10))},
+            {"name": "bed", "rect": self.bed, "hint": "[J] Sleep", "text": bed_text, "sound": self.interact_sound, "position": ((self.bed.x + 85), (self.bed.y - 10))},
+            {"name": "door", "rect": self.door, "hint": "[J] Open", "text": "There's nobody outside.", "sound": self.interact_sound, "position": ((self.door.x - 25), (self.door.y - 10))}
         ]
 
-        self.doorParticles = []
-        self.isDoorBroken = False
-        self.starSparkles = []
-        self.starSparkles.append(particles.Sparkle((christmas_tree.centerx + 4), (christmas_tree.top - 8))) ## have to change the pos so that it matches assets ltr
-        self.starSparkles.append(particles.Sparkle((christmas_tree.centerx + 7), (christmas_tree.top - 4)))
-        self.starSparkles.append(particles.Sparkle((christmas_tree.centerx - 6), (christmas_tree.top - 1)))
-        self.snowParticles = []
-        for _ in range(200):
-            self.snowParticles.append(particles.Snow(800, 600, 2, -4))
+        # self.doorParticles = []
+        # self.isDoorBroken = False
+        # self.starSparkles = []
+        # self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 4), (self.christmas_tree.top - 8))) ## have to change the pos so that it matches assets ltr
+        # self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 7), (self.christmas_tree.top - 4)))
+        # self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx - 6), (self.christmas_tree.top - 1)))
+        # self.snowParticles = []
+        # for _ in range(200):
+        #     self.snowParticles.append(particles.Snow(800, 600, 2, -4))
 
-        self.start_time = pygame.time.get_ticks()
-        self.trigger_delay = 5000 # seconds delay b4 knocking phase
+        # self.start_time = pygame.time.get_ticks()
+        self.trigger_delay = 15000 # seconds delay b4 knocking phase
         self.knocking_interval = 3000 # 3 seconds between knocks
-        self.last_knock_time = 0
+        # self.last_knock_time = 0
 
-        self.state = "NORMAL" # cutscene states, NORMAL, KNOCKING, BREAKING, INCHING, RUSH, BLACKOUT, CREDITS 
-        self.inching_count = 0
-        self.inching_timer = 0
-        self.black_bar_height = 0
-        self.red_filter_alpha = 0
-        self.krampus = enemy_krampus.Enemy_Krampus((door.centerx + 70), door.centery, 0.2, 2)
-
+        # self.state = "NORMAL" # cutscene states, NORMAL, KNOCKING, BREAKING, INCHING, RUSH, BLACKOUT, CREDITS 
+        # self.inching_count = 0
+        # self.inching_timer = 0
+        # self.black_bar_height = 0
+        # self.red_filter_alpha = 0
+        
         self.player_target_x = 0
         self.enemy_target_x = 0
         self.move_speed = 2 # Speed of smooth movement during inching
 
-        self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
+        # self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
+        # self.krampus = enemy_krampus.Enemy_Krampus((self.door.centerx + 70), self.door.centery, 0.2, 2)
         self.platforms = pygame.sprite.Group()
         self.platforms.add(platform.Platform(-50, GROUND_Y, 900, 120, BROWN_FLOOR))
         self.platforms.add(platform.Platform(-10, -50, 35, 600, BROWN_FLOOR))
         self.platforms.add(platform.Platform(775, -50, 35, 600, BROWN_FLOOR))
+
+    def setup_level(self):
+        self.state = "NORMAL"
+        self.start_time = pygame.time.get_ticks()
+        self.last_knock_time = 0
+        self.inching_count = 0
+        self.inching_timer = 0
+        self.black_bar_height = 0
+        self.red_filter_alpha = 0
+        self.activeInteractable = None
+        self.interactableDialogue = False
+        self.isDoorBroken = False
+
+        pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
+        pygame.mixer.music.set_volume(0.1)
+
+        self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
+        self.krampus = enemy_krampus.Enemy_Krampus((self.door.centerx + 70), self.door.centery, 0.2, 2)
+
+        self.doorParticles = []
+        self.isDoorBroken = False
+        self.starSparkles = []
+        self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 4), (self.christmas_tree.top - 8))) ## have to change the pos so that it matches assets ltr
+        self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 7), (self.christmas_tree.top - 4)))
+        self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx - 6), (self.christmas_tree.top - 1)))
+        self.snowParticles = []
+        for _ in range(200):
+            self.snowParticles.append(particles.Snow(800, 600, 2, -4))
         
 
     def run(self, events):
+        if not self.isInitialized:
+            self.setup_level()
+            self.isInitialized = True
+
         current_time = pygame.time.get_ticks()
 
         if self.state != "CREDITS":
@@ -156,15 +215,15 @@ class Chapter3:
         elif self.state == "KNOCKING":
             if current_time - self.last_knock_time > self.knocking_interval:
                 pygame.mixer.music.fadeout(500)
-                self.knockingChannel.play(knocking_door)
+                self.knockingChannel.play(self.knocking_door)
                 self.last_knock_time = current_time
             
         elif self.state == "BREAKING":
             if not self.doorParticles and not self.isDoorBroken:
                 self.isDoorBroken = True
                 for _ in range(50):
-                    spawn_y = random.randint(door.top, door.bottom)
-                    self.doorParticles.append(particles.Splinter(door.left, spawn_y, (150, 210)))
+                    spawn_y = random.randint(self.door.top, self.door.bottom)
+                    self.doorParticles.append(particles.Splinter(self.door.left, spawn_y, (150, 210)))
 
             self.knockingChannel.stop()
             self.interactChannel.stop()
@@ -186,7 +245,7 @@ class Chapter3:
                 self.state = "INCHING"
                 self.inching_timer = current_time
 
-                if self.krampus.rect.x > door.x:
+                if self.krampus.rect.x > self.door.x:
                     self.krampus.rect.x -= self.move_speed
 
                 self.player_target_x = self.player.rect.x
@@ -215,7 +274,7 @@ class Chapter3:
             self.krampus.rect.x -= 15
             if self.krampus.rect.colliderect(self.player.rect):
                 self.state = "BLACKOUT"
-                self.jumpscareChannel.play(jumpscare_sound)
+                self.jumpscareChannel.play(self.jumpscare_sound)
                 self.inching_timer = current_time
 
         elif self.state == "BLACKOUT":
@@ -232,8 +291,10 @@ class Chapter3:
             self.draw_text("Press any key to return to menu", (150, 150, 150), 400, 380, True)
             for event in events:
                 if event.type == pygame.KEYDOWN:
-                    self.gameStateManager.set_state("menu")
                     pygame.mixer.music.fadeout(500)
+                    self.gameStateManager.set_state("menu")
+                    self.isInitialized = False
+                    return
 
         if self.state in ["NORMAL", "KNOCKING"]:
             self.handle_interactions(events)
@@ -285,9 +346,9 @@ class Chapter3:
                         self.interactChannel.play(current_touching_object["sound"])
                     self.interactableDialogue = True
                     self.activeInteractable = current_touching_object["rect"]
-                    if self.activeInteractable == door and self.state == "KNOCKING":
+                    if self.activeInteractable == self.door and self.state == "KNOCKING":
                         self.state = "BREAKING"
-                        self.horrorTensionChannel.play(tension_horror_buildup)
+                        self.horrorTensionChannel.play(self.tension_horror_buildup)
                         self.player.isCutscene = True
 
         if current_touching_object:
@@ -303,24 +364,24 @@ class Chapter3:
         self.play_bgm(0, 4000)
 
         ## snow thru window
-        self.display.set_clip(window) 
+        self.display.set_clip(self.window) 
         for snow in self.snowParticles:
             snow.update()
             snow.draw(self.display)
         self.display.set_clip(None)
 
-        window_glass.set_alpha(85)
-        window_glass.fill(WINDOW_GLASS_COLOR)
-        self.display.blit(window_glass, (window.x, window.y))
+        self.window_glass.set_alpha(85)
+        self.window_glass.fill(WINDOW_GLASS_COLOR)
+        self.display.blit(self.window_glass, (self.window.x, self.window.y))
 
         self.platforms.draw(self.display)
-        self.draw_props_rect(BROWN_FLOOR, ceiling)
-        self.draw_props_rect(RED_OBJECT, bed)
+        self.draw_props_rect(BROWN_FLOOR, self.ceiling)
+        self.draw_props_rect(RED_OBJECT, self.bed)
         # self.draw_props_rect(RED_OBJECT, window)
-        self.draw_props_rect(RED_OBJECT, christmas_tree)
-        self.draw_props_rect(PRESENT_COLOR, present)
+        self.draw_props_rect(RED_OBJECT, self.christmas_tree)
+        self.draw_props_rect(PRESENT_COLOR, self.present)
         if self.state not in ["BREAKING", "INCHING", "RUSH"]:
-            self.draw_props_rect(RED_OBJECT, door)
+            self.draw_props_rect(RED_OBJECT, self.door)
 
         for sparkle in self.starSparkles:
             sparkle.update()
