@@ -5,22 +5,27 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from Entities.Player.player_child import Player_Child as Player
-from Entities.Obstacle.platform import Platform
 from Entities.Enemy.enemy_krampus import Enemy_Krampus as Krampus
+from Entities.Obstacle.platform import Platform
+
 
 pygame.init()
 
 # ---------------- SETTINGS ----------------
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Christmas Alone - Chapter 2")
+pygame.display.set_caption("Chapter 2")
 clock = pygame.time.Clock()
 
 font = pygame.font.SysFont(None, 30)
 
+# ---------------- ASSETS ----------------
+ice_cave_bg = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Ice_cave_1.png")).convert()
+ice_cave_bg = pygame.transform.scale(ice_cave_bg, (WIDTH, HEIGHT))
+
 # ---------------- GLOBAL TORCH ----------------
 light_radius = 200
-dim_speed = 100
+dim_speed = 1
 
 
 # ---------------- LIGHT SYSTEM ----------------
@@ -90,14 +95,14 @@ def scene1():
 
         player.move(platforms)
 
-        screen.fill((40, 40, 40))
+        screen.blit(ice_cave_bg, (0, 0))
 
         for p in platforms:
             screen.blit(p.image, p.rect)
 
         pygame.draw.rect(screen, (200, 180, 100), sign_rect)
         
-        cone_points = [(80, 0), (160, 0), (250, HEIGHT), (0, HEIGHT)]
+        cone_points = [(120, 0), (160, 0), (250, HEIGHT), (0, HEIGHT)]
         
         cone_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         
@@ -107,8 +112,6 @@ def scene1():
             cone_points)
         
         screen.blit(cone_surface, (0, 0))
-        
-        pygame.draw.rect(screen, (0, 0, 0), (80, 0, 80, 20))
 
         draw_player_with_light(player)
 
@@ -355,7 +358,7 @@ def scene4():
 
 
 # ---------------- START ----------------
-scene3()
+scene1()
 
 pygame.quit()
 sys.exit()
