@@ -32,6 +32,8 @@ class Player_Child(pygame.sprite.Sprite):
         self.isCutscene = False
 
     def move(self, platforms):
+        if self.isCutscene:
+            return
         keys = pygame.key.get_pressed()
         
         self.direction = 0
@@ -40,6 +42,7 @@ class Player_Child(pygame.sprite.Sprite):
         dx = 0
         dy = 0
 
+        
         if keys[pygame.K_a]:
             self.direction = -1
             self.facingRight = False

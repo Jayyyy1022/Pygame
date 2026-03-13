@@ -1,7 +1,7 @@
 import pygame
 
 class Enemy_Krampus(pygame.sprite.Sprite):
-    def __init__(self, x, y, scale, speed, gravity):
+    def __init__(self, x, y, scale, speed, gravity=0.75):
         pygame.sprite.Sprite.__init__(self)
 
         ## Frames
