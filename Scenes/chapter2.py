@@ -10,6 +10,7 @@ from Entities.Obstacle.platform import Platform
 
 
 pygame.init()
+pygame.mixer.init()
 
 # ---------------- SETTINGS ----------------
 WIDTH, HEIGHT = 800, 600
@@ -29,10 +30,20 @@ ice_cave_bg3 = pygame.transform.scale(ice_cave_bg3, (WIDTH, HEIGHT))
 sign = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Wooden_Sign.png")).convert_alpha()
 sign = pygame.transform.scale(sign, (40, 60))
 cave_platform = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Cave_platforms_1.png")).convert_alpha()
+key_image = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Key.png")).convert_alpha()
+key_image = pygame.transform.scale(key_image, (30, 30))
+door_image = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Cave_door.png")).convert_alpha()
+door_image = pygame.transform.scale(door_image, (50, 80))  # match the rectangle size
+
+fall_sound = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Fall_down.mp3"))
+ghost_whisper = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Ghost_whisper.mp3"))
+ghost_whisper.set_volume(0)  # start muted
+ghost_playing = False
+door_appear_sound = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Door_appear.mp3"))
 
 # ---------------- GLOBAL TORCH ----------------
 light_radius = 200
-dim_speed = 1.5
+dim_speed = 2
 
 
 # ---------------- LIGHT SYSTEM ----------------
@@ -71,6 +82,18 @@ def draw_player_with_light(player):
     pygame.draw.circle(darkness, (0, 0, 0, 0), center, int(radius))
 
     screen.blit(darkness, (0, 0))
+
+    global ghost_playing
+
+    # Start ghost whisper when radius <= 150
+    if light_radius <= 150:
+        if not ghost_playing:
+            ghost_whisper.play(loops=-1)
+            ghost_playing = True
+
+        # Gradually increase volume as light dims (150 -> 10 maps to 0 -> 1)
+        volume = max(0, min(1, (150 - light_radius) / (150 - 10)))
+        ghost_whisper.set_volume(volume)
     
 # ---------------- KRAMPUS DANGER ----------------
 def draw_krampus_danger(player, krampus):
@@ -92,14 +115,13 @@ def draw_krampus_danger(player, krampus):
 
 
 # ---------------- SCENE 1 ----------------
-def scene1(spawn_drop=True):
+def scene1():
 
     global light_radius
 
-    if spawn_drop:
-        player = Player(120, -50, 0.1, 4, 0.5)  # falling spawn
-    else:
-        player = Player(120, 430, 0.1, 4, 0.5)  # normal ground spawn
+    player = Player(120, -50, 0.1, 4, 0.5) 
+        
+    player_landed = False
 
     platforms = [
         Platform(0, 500, WIDTH, 100)
@@ -127,6 +149,13 @@ def scene1(spawn_drop=True):
                         show_dialogue = not show_dialogue
 
         player.move(platforms)
+
+        # --- Check if player landed ---
+        on_ground = any(player.rect.bottom == p.rect.top for p in platforms)
+
+        if on_ground and not player_landed:
+            fall_sound.play()  # play only once
+            player_landed = True
 
         screen.blit(ice_cave_bg, (0, 0))
 
@@ -175,14 +204,24 @@ def scene2():
 
     player = Player(10, 430, 0.1, 4, 0.5)
 
+    # --- Platforms ---
     platforms = [
-        Platform(0, 500, 150, 50),
-        Platform(300, 420, 200, 50),
-        Platform(650, 500, 150, 50),
-        Platform(650, 200, 150, 50),
-        Platform(0, 0, 0, 0),  # Placeholder
-        Platform(0, 0, 0, 0)  # Placeholder
+        Platform(0, 500, 150, 50),     # starting platform(bottom left)
+        Platform(650, 250, 150, 50),   # top right
+        Platform(200, 380, 150, 50),   # middle left
+        Platform(50, 150, 150, 50),    # top left (key here)
+        Platform(350, 150, 150, 50),   # top middle
+        Platform(450, 380, 150, 50),   # middle
+        Platform(650, 500, 150, 50)    # Exit (bottom right)
     ]
+
+    # --- Key collectible ---
+    key_rect = pygame.Rect(80, 110, 30, 30)  # positioned above top-left platform
+    key_collected = False
+
+    # --- Exit door ---
+    door_rect = pygame.Rect(700, 440, 50, 80)  # exit door on bottom right platform
+    door_visible = False
 
     running = True
 
@@ -196,29 +235,54 @@ def scene2():
                 pygame.quit()
                 sys.exit()
 
+        # --- Player movement ---
         player.move(platforms)
-        
+
+        # --- Check key collection ---
+        if not key_collected and player.rect.colliderect(key_rect):
+            key_collected = True
+            door_visible = True  # door appears after collecting key
+            door_appear_sound.play()
+
+        # --- Prevent scene transition until key collected ---
+        proceed_to_next_scene = False
+        if door_visible and player.rect.colliderect(door_rect):
+            proceed_to_next_scene = True
+
+        # --- Check fall off screen ---
         if player.rect.top >= HEIGHT:
-            scene1(False)
+            scene1()
             return
 
+        # --- Draw background ---
         screen.blit(ice_cave_bg2, (0, 0))
 
+        # --- Draw platforms ---
         for p in platforms:
-            screen.blit(p.image, p.rect)
             p.image = pygame.transform.scale(cave_platform, (p.rect.width, p.rect.height))
+            screen.blit(p.image, p.rect)
 
+        # --- Draw key ---
+        if not key_collected:
+            screen.blit(key_image, key_rect.topleft)
+
+        # --- Draw exit door ---
+        if door_visible:
+            screen.blit(door_image, door_rect.topleft)
+
+        # --- Draw player with torch effect ---
         draw_player_with_light(player)
-        
+
+        # --- Torch dimming ---
         if light_radius > 10:
             light_radius -= dim_speed * dt
 
         pygame.display.update()
 
-        if player.rect.right >= WIDTH:
+        # --- Scene transition only if player touches the door ---
+        if proceed_to_next_scene:
             scene3()
             return
-
 
 # ---------------- SCENE 3 MONSTER CHASE ----------------
 def scene3():
@@ -381,7 +445,7 @@ def scene4():
 
 
 # ---------------- START ----------------
-scene1()
+scene2()
 
 pygame.quit()
 sys.exit()
