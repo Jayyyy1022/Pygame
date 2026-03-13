@@ -24,10 +24,14 @@ ice_cave_bg = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Ice_cav
 ice_cave_bg = pygame.transform.scale(ice_cave_bg, (WIDTH, HEIGHT))
 ice_cave_bg2 = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Ice_cave_2.png")).convert_alpha()
 ice_cave_bg2 = pygame.transform.scale(ice_cave_bg2, (WIDTH, HEIGHT))
+ice_cave_bg3 = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Ice_cave_exit.png")).convert_alpha()
+ice_cave_bg3 = pygame.transform.scale(ice_cave_bg3, (WIDTH, HEIGHT))
+sign = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Wooden_Sign.png")).convert_alpha()
+sign = pygame.transform.scale(sign, (40, 60))
 
 # ---------------- GLOBAL TORCH ----------------
 light_radius = 200
-dim_speed = 1
+dim_speed = 1.5
 
 
 # ---------------- LIGHT SYSTEM ----------------
@@ -37,7 +41,6 @@ def draw_player_with_light(player):
     player.draw(screen)
 
     darkness = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-    darkness.fill((0, 0, 0, 180))
 
     center = player.rect.center
 
@@ -47,6 +50,12 @@ def draw_player_with_light(player):
 
     # normalize radius
     radius_ratio = max(0, min(1, (light_radius - min_radius) / (max_radius - min_radius)))
+    
+    # darker environment when torch is weak
+    darkness_alpha = 220 - (radius_ratio * 120)
+
+    darkness = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    darkness.fill((0, 0, 0, int(darkness_alpha)))
 
     # flicker speed increases as light gets smaller
     flicker_speed = 5 + (1 - radius_ratio) * 25
@@ -61,6 +70,24 @@ def draw_player_with_light(player):
     pygame.draw.circle(darkness, (0, 0, 0, 0), center, int(radius))
 
     screen.blit(darkness, (0, 0))
+    
+# ---------------- KRAMPUS DANGER ----------------
+def draw_krampus_danger(player, krampus):
+
+    # distance between player and krampus
+    distance = abs(player.rect.centerx - krampus.rect.centerx)
+
+    danger_range = 200
+
+    if distance < danger_range:
+
+        # stronger red when closer
+        intensity = int((1 - distance / danger_range) * 120)
+
+        red_overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        red_overlay.fill((255, 0, 0, intensity))
+
+        screen.blit(red_overlay, (0, 0))
 
 
 # ---------------- SCENE 1 ----------------
@@ -102,7 +129,7 @@ def scene1():
         for p in platforms:
             screen.blit(p.image, p.rect)
 
-        pygame.draw.rect(screen, (200, 180, 100), sign_rect)
+        screen.blit(sign, sign_rect)
         
         cone_points = [(80, 0), (160, 0), (250, HEIGHT), (0, HEIGHT)]
         
@@ -200,7 +227,7 @@ def scene3():
     monster_speed = 150
 
     # --- Spawn delay ---
-    spawn_delay = 0.8
+    spawn_delay = 0.5
     spawn_timer = 0
     krampus_active = False
     krampus_on_ground = False
@@ -262,6 +289,7 @@ def scene3():
         # --- Draw Krampus ---
         if krampus_active:
             krampus.draw(screen)
+            draw_krampus_danger(player, krampus)
 
         # --- Collision ---
         if krampus_active and player.rect.colliderect(krampus.rect):
@@ -291,7 +319,7 @@ def scene4():
 
     global light_radius
 
-    player = Player(120, -50, 0.1, 4, 0.5)
+    player = Player(10, 430, 0.1, 4, 0.5)
 
     platforms = [
         Platform(0, 500, WIDTH, 100)
@@ -311,7 +339,7 @@ def scene4():
 
         player.move(platforms)
 
-        screen.fill((30, 30, 30))
+        screen.blit(ice_cave_bg3, (0, 0))
 
         for p in platforms:
             screen.blit(p.image, p.rect)
@@ -338,13 +366,8 @@ def scene4():
 
         pygame.display.update()
 
-        if player.rect.right >= WIDTH - 200:
-
-            text = font.render("You escaped the forest...", True, (255, 255, 255))
-            screen.blit(text, (WIDTH // 2 - 120, HEIGHT // 2))
-            pygame.display.update()
-            pygame.time.delay(3000)
-
+        if player.rect.right >= WIDTH:
+            ##Credits or next chapter here
             return
 
 
