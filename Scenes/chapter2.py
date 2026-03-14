@@ -23,6 +23,10 @@ clock = pygame.time.Clock()
 
 font = pygame.font.SysFont(None, 30)
 
+landing_dialogue_shown = False
+scene2_entry_dialogue_shown = False  # for "Is that a key..."
+scene2_key_dialogue_shown = False    # for "A door appeared..."
+
 # ---------------- ASSETS ----------------
 ice_cave_bg = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Ice_cave_1.png")).convert()
 ice_cave_bg = pygame.transform.scale(ice_cave_bg, (WIDTH, HEIGHT))
@@ -205,87 +209,146 @@ def play_bgm(scene_name, volume=0.5):
 
 # ---------------- SCENE 1 ----------------
 def scene1():
-
     global light_radius
-    
+    global landing_dialogue_shown   # persists across scene reloads
+
     play_bgm("scene1")
 
     player = Player(120, -50, 0.1, 4, 0.5) 
-        
+    
+    show_sign_dialogue = False
+    sign_dialogue_timer = 0
+    
     player_landed = False
+    dialogue_stage = 0      # 0 = no dialogue, 1 = first line, 2 = second line
+    dialogue_timer = 0      # to time the second line
+    
+    prev_on_ground = False
 
     platforms = [
         Platform(0, 500, WIDTH, 100)
     ]
 
     sign_rect = pygame.Rect(380, 440, 40, 60)
-    show_dialogue = False
 
     running = True
 
     while running:
-
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
-
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
             if event.type == pygame.KEYDOWN:
-
-                if event.key == pygame.K_e:
+                if event.key == pygame.K_j:
                     if player.rect.colliderect(sign_rect):
-                        show_dialogue = not show_dialogue
+                        show_sign_dialogue = True
+                        sign_dialogue_timer = 0  # reset timer
 
         player.move(platforms)
 
         # --- Check if player landed ---
         on_ground = any(player.rect.bottom == p.rect.top for p in platforms)
 
-        if on_ground and not player_landed:
-            fall_sound.play()  # play only once
+        # Play landing SFX every time player lands, but show dialogue only once
+        if on_ground and not player_landed and not prev_on_ground:
+            fall_sound.play()  # landing SFX
             player_landed = True
 
-        screen.blit(ice_cave_bg, (0, 0))
+            if not landing_dialogue_shown:
+                dialogue_stage = 1
+                dialogue_timer = 0
+                landing_dialogue_shown = True  # lock dialogue permanently
 
+        prev_on_ground = on_ground
+
+        # --- Draw background and platforms ---
+        screen.blit(ice_cave_bg, (0, 0))
         for p in platforms:
             screen.blit(p.image, p.rect)
-
         screen.blit(sign, sign_rect)
-        
+
+        # --- Torch/light cone overlay ---
         cone_points = [(80, 0), (160, 0), (250, HEIGHT), (0, HEIGHT)]
-        
         cone_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-        
-        pygame.draw.polygon(
-            cone_surface,
-            (255, 255, 200, 120),
-            cone_points)
-        
+        pygame.draw.polygon(cone_surface, (255, 255, 200, 120), cone_points)
         screen.blit(cone_surface, (0, 0))
 
+        # --- Dialogue handling ---
+        if dialogue_stage > 0:
+            dialogue_timer += dt
+
+            if dialogue_stage == 1:
+                # First line
+                text = font.render("Ouff! Where am I....", True, (255, 255, 255))
+                padding = 6
+                box_width = text.get_width() + padding*2
+                box_height = text.get_height() + padding*2
+                box_x = player.rect.centerx - box_width//2
+                box_y = player.rect.y - 60
+                pygame.draw.rect(screen, (0,0,0), (box_x, box_y, box_width, box_height))
+                screen.blit(text, (box_x + padding, box_y + padding))
+
+                if dialogue_timer >= 1.5:  # after 1.5 seconds
+                    dialogue_stage = 2
+                    dialogue_timer = 0
+
+            elif dialogue_stage == 2:
+                # Second line
+                text = font.render("I need to get out of here!", True, (255, 255, 255))
+                padding = 6
+                box_width = text.get_width() + padding*2
+                box_height = text.get_height() + padding*2
+                box_x = player.rect.centerx - box_width//2
+                box_y = player.rect.y - 60
+                pygame.draw.rect(screen, (0,0,0), (box_x, box_y, box_width, box_height))
+                screen.blit(text, (box_x + padding, box_y + padding))
+
+                if dialogue_timer >= 2:   # show for 2 seconds
+                    dialogue_stage = 0
+
+        # --- Sign interaction ---
+        if player.rect.colliderect(sign_rect):
+            # Draw black box
+            hint_text = "Press J"
+            text_surface = font.render(hint_text, True, (255, 255, 255))
+            padding = 6
+            box_width = text_surface.get_width() + padding*2
+            box_height = text_surface.get_height() + padding*2
+            box_x = sign_rect.x - 10
+            box_y = sign_rect.y - 35
+            pygame.draw.rect(screen, (0,0,0), (box_x, box_y, box_width, box_height))
+            screen.blit(text_surface, (box_x + padding, box_y + padding))
+
+        # --- Show sign dialogue if activated ---
+        if show_sign_dialogue:
+            sign_dialogue_timer += dt
+            text = font.render("Escape before the light fades. What does that mean...", True, (255, 255, 255))
+            padding = 6
+            box_width = text.get_width() + padding*2
+            box_height = text.get_height() + padding*2
+            box_x = player.rect.centerx - box_width//2
+            box_y = player.rect.y - 60
+            pygame.draw.rect(screen, (0,0,0), (box_x, box_y, box_width, box_height))
+            screen.blit(text, (box_x + padding, box_y + padding))
+
+            if sign_dialogue_timer >= 2:  # display 2 seconds
+                show_sign_dialogue = False
+
+        # --- Draw player on top ---
         draw_player_with_light(player)
 
-        if player.rect.colliderect(sign_rect):
-
-            hint = font.render("Press E", True, (255, 255, 255))
-            screen.blit(hint, (sign_rect.x - 10, sign_rect.y - 30))
-
-        if show_dialogue:
-
-            text = font.render("Escape before the light fades.", True, (255, 255, 255))
-            screen.blit(text, (player.rect.x - 120, player.rect.y - 40))
-
+        # --- Torch dimming ---
         if light_radius > 0:
             light_radius -= dim_speed * dt
         else:
             game_over()
-        
 
         pygame.display.update()
 
+        # --- Scene transition ---
         if player.rect.right >= WIDTH:
             scene2()
             return
@@ -293,9 +356,10 @@ def scene1():
 
 # ---------------- SCENE 2 PLATFORM LEVEL ----------------
 def scene2():
-
     global light_radius
-    
+    global scene2_entry_dialogue_shown
+    global scene2_key_dialogue_shown
+
     play_bgm("scene2")
 
     player = Player(10, 430, 0.1, 4, 0.5)
@@ -319,14 +383,24 @@ def scene2():
     door_rect = pygame.Rect(700, 440, 50, 80)  # exit door on bottom right platform
     door_visible = False
 
+    # --- Dialogue timers & stages ---
+    entry_dialogue_stage = 0
+    entry_dialogue_timer = 0
+    key_dialogue_stage = 0
+    key_dialogue_timer = 0
+
+    # Show entry dialogue only once
+    if not scene2_entry_dialogue_shown:
+        entry_dialogue_stage = 1
+        entry_dialogue_timer = 0
+        scene2_entry_dialogue_shown = True
+
     running = True
 
     while running:
-
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
-
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -339,6 +413,12 @@ def scene2():
             key_collected = True
             door_visible = True  # door appears after collecting key
             door_appear_sound.play()
+
+            # Trigger key-collected dialogue once
+            if not scene2_key_dialogue_shown:
+                key_dialogue_stage = 1
+                key_dialogue_timer = 0
+                scene2_key_dialogue_shown = True
 
         # --- Prevent scene transition until key collected ---
         proceed_to_next_scene = False
@@ -366,8 +446,40 @@ def scene2():
         if door_visible:
             screen.blit(door_image, door_rect.topleft)
 
-        # --- Draw player with torch effect ---
+        # --- Draw torch/light ---
         draw_player_with_light(player)
+
+        # --- Entry dialogue ---
+        if entry_dialogue_stage > 0:
+            entry_dialogue_timer += dt
+            if entry_dialogue_stage == 1:
+                text = font.render("Is that a key on the top platform?", True, (255, 255, 255))
+                padding = 6
+                box_width = text.get_width() + padding*2
+                box_height = text.get_height() + padding*2
+                box_x = player.rect.centerx - box_width//2
+                box_y = player.rect.y - 60
+                pygame.draw.rect(screen, (0,0,0), (box_x, box_y, box_width, box_height))
+                screen.blit(text, (box_x + padding, box_y + padding))
+
+                if entry_dialogue_timer >= 2:  # display 2 seconds
+                    entry_dialogue_stage = 0
+
+        # --- Key collected dialogue ---
+        if key_dialogue_stage > 0:
+            key_dialogue_timer += dt
+            if key_dialogue_stage == 1:
+                text = font.render("A door appeared out of nowhere...", True, (255, 255, 255))
+                padding = 6
+                box_width = text.get_width() + padding*2
+                box_height = text.get_height() + padding*2
+                box_x = player.rect.centerx - box_width//2
+                box_y = player.rect.y - 60
+                pygame.draw.rect(screen, (0,0,0), (box_x, box_y, box_width, box_height))
+                screen.blit(text, (box_x + padding, box_y + padding))
+
+                if key_dialogue_timer >= 2:  # display 2 seconds
+                    key_dialogue_stage = 0
 
         # --- Torch dimming ---
         if light_radius > 0:
@@ -608,8 +720,8 @@ def scene4():
     # --- Scene 4 Krampus setup ---
     krampus = Krampus(0, 430, 0.2, 2, 0.5)  # start off-screen left
     krampus_active = False                        # spawn after delay
-    krampus_speed = 390                           # pixels per second
-    krampus_spawn_delay = 2                       # 2 second delay
+    krampus_speed = 323                           # pixels per second
+    krampus_spawn_delay = 1                       # 1 second delay
     krampus_timer = 0                              # timer to track delay
 
     running = True
@@ -701,6 +813,7 @@ def scene4():
         if player.rect.right >= WIDTH:
 
             # Stop BGM immediately
+            pygame.mixer.stop() 
             pygame.mixer.music.stop()
             current_bgm = None
 
@@ -753,7 +866,7 @@ def scene4():
 
 
 # ---------------- START ----------------
-scene4()
+scene1()
 
 pygame.quit()
 sys.exit()
