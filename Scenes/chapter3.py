@@ -6,7 +6,6 @@ from Entities.Obstacle import platform
 from Entities.Decoration import prop
 from Entities.Player import player_child
 from Entities.Enemy import enemy_krampus
-from Scenes import game_state_manager
 from Scenes import particles
 
 ## Game variables
@@ -107,7 +106,6 @@ class Chapter3:
             {"name": "door", "rect": self.door, "hint": "[J] Open", "text": door_text, "sound": self.interact_sound, "position": ((self.door.x - 25), (self.door.y - 10))}
         ]
 
-        self.fade_in_alpha = 255
         self.fade_speed = 1.5
         self.trigger_delay = 15000 # seconds delay b4 knocking phase
         self.knocking_interval = 3000 # 3 seconds between knocks
@@ -128,6 +126,7 @@ class Chapter3:
         self.activeInteractable = None
         self.interactableDialogue = False
         
+        self.fade_in_alpha = 255
         self.is_first_knock = True
         self.last_knock_time = 0
         self.isDoorBroken = False
