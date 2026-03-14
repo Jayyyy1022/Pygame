@@ -103,6 +103,7 @@ class Chapter3:
         self.large_font = pygame.font.SysFont(None, 50)
 
         pygame.mixer.init()
+        pygame.mixer.stop()
         # pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
         # pygame.mixer.music.set_volume(0.1) ## bgm
         self.interact_sound = pygame.mixer.Sound("Assets\\SFX\\interact_sound.mp3")
@@ -141,9 +142,7 @@ class Chapter3:
         self.photo_frame_prop = prop.BackgroundDecoration(self.bed.left - 1, self.bed.top - 220, "Assets\\Objects\\house_photo_frame.png", 23, 136)
         self.star_prop = prop.BackgroundDecoration(self.christmas_tree.left + 79, self.christmas_tree.top - 22, "Assets\\Objects\\star.png", 23.5, 24.4)
         
-        self.props = pygame.sprite.OrderedUpdates()
-        self.props.add(self.window_prop, self.bed_prop, self.photo_frame_prop, 
-                       self.christmas_tree_prop, self.star_prop, self.present_prop, self.door_prop)
+        
 
         self.window_glass = pygame.Surface((self.window.width, self.window.height)).convert_alpha()
         self.outside_window = pygame.image.load("Assets\\Backgrounds\\snowy_landscape_3.png").convert_alpha()
@@ -167,8 +166,10 @@ class Chapter3:
         # for _ in range(200):
         #     self.snowParticles.append(particles.Snow(800, 600, 2, -4))
 
+        self.fade_in_alpha = 255
+        self.fade_speed = 3
         # self.start_time = pygame.time.get_ticks()
-        self.trigger_delay = 15000 # seconds delay b4 knocking phase
+        self.trigger_delay = 5000 # seconds delay b4 knocking phase
         self.knocking_interval = 3000 # 3 seconds between knocks
         # self.last_knock_time = 0
 
@@ -184,14 +185,10 @@ class Chapter3:
 
         # self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
         # self.krampus = enemy_krampus.Enemy_Krampus((self.door.centerx + 70), self.door.centery, 0.2, 2)
-        self.platforms = pygame.sprite.Group()
-        self.platforms.add(platform.Platform(-50, GROUND_Y, 900, 120, BROWN_FLOOR))
-        self.platforms.add(platform.Platform(-10, -50, 35, 600, BROWN_FLOOR))
-        self.platforms.add(platform.Platform(775, -50, 35, 600, BROWN_FLOOR))
-        self.platforms.add(platform.Platform(-50, -50, 900, 80, BROWN_FLOOR))
+        
 
     def setup_level(self):
-        self.state = "NORMAL"
+        self.state = "FADE_IN"
         self.start_time = pygame.time.get_ticks()
         self.last_knock_time = 0
         self.inching_count = 0
@@ -205,8 +202,16 @@ class Chapter3:
         pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
         pygame.mixer.music.set_volume(0.18)
 
-        self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
+        self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 50), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
         self.krampus = enemy_krampus.Enemy_Krampus((self.door.centerx + 70), self.door.centery, 0.2, 2)
+        self.props = pygame.sprite.OrderedUpdates()
+        self.props.add(self.window_prop, self.bed_prop, self.photo_frame_prop, 
+                       self.christmas_tree_prop, self.star_prop, self.present_prop, self.door_prop)
+        self.platforms = pygame.sprite.Group()
+        self.platforms.add(platform.Platform(-50, GROUND_Y, 900, 120, BROWN_FLOOR))
+        self.platforms.add(platform.Platform(-10, -50, 35, 600, BROWN_FLOOR))
+        self.platforms.add(platform.Platform(775, -50, 35, 600, BROWN_FLOOR))
+        self.platforms.add(platform.Platform(-50, -50, 900, 80, BROWN_FLOOR))
 
         self.doorParticles = []
         self.isDoorBroken = False
@@ -217,6 +222,9 @@ class Chapter3:
         self.snowParticles = []
         for _ in range(200):
             self.snowParticles.append(particles.Snow(800, 600, 2, -4))
+        self.endingSnowParticles = []
+        for _ in range(120):
+            self.endingSnowParticles.append(particles.Snow(800, 600, start_at_top = True))
         
 
     def run(self, events):
@@ -228,8 +236,18 @@ class Chapter3:
 
         if self.state != "CREDITS":
             self.draw_room()
+        
+        if self.fade_in_alpha > 0:
+            self.fade_in_alpha -= self.fade_speed
+            if self.fade_in_alpha < 0:
+                self.fade_in_alpha = 0
 
-        if self.state == "NORMAL":
+        if self.state == "FADE_IN":
+            if self.fade_in_alpha <= 0:
+                self.state = "NORMAL"
+                self.start_time = pygame.time.get_ticks() 
+
+        elif self.state == "NORMAL":
             if current_time - self.start_time > self.trigger_delay:
                 self.state = "KNOCKING"
                 self.last_knock_time = current_time
@@ -311,6 +329,7 @@ class Chapter3:
             self.draw_text("AND", WHITE, 400, 295, True)
             self.draw_text("THANK YOU FOR PLAYING", WHITE, 400, 330, True)
             self.draw_text("Press any key to return to menu", (150, 150, 150), 400, 380, True)
+            self.draw_snow(self.endingSnowParticles)
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     pygame.mixer.music.fadeout(500)
@@ -392,9 +411,7 @@ class Chapter3:
 
         ## snow thru window
         self.display.set_clip(self.window) 
-        for snow in self.snowParticles:
-            snow.update()
-            snow.draw(self.display)
+        self.draw_snow(self.snowParticles)
         self.display.set_clip(None)
 
         self.props.draw(self.display)
@@ -438,7 +455,14 @@ class Chapter3:
         if self.red_filter_alpha > 0:
             s = pygame.Surface((800, 600))
             s.set_alpha(self.red_filter_alpha)
-            s.fill((255, 0, 0))
+            s.fill("RED")
+            self.display.blit(s, (0,0))
+
+        # White fade in
+        if self.fade_in_alpha > 0:
+            s = pygame.Surface((800, 600))
+            s.set_alpha(self.fade_in_alpha)
+            s.fill(WHITE)
             self.display.blit(s, (0,0))
 
 
@@ -457,3 +481,8 @@ class Chapter3:
         filter = pygame.Surface(surface.get_size()).convert_alpha()
         filter.fill(color)
         surface.blit(filter, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
+
+    def draw_snow(self, particles):
+        for snow in particles:
+            snow.update()
+            snow.draw(self.display)

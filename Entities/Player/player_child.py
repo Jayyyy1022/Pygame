@@ -2,7 +2,7 @@ import pygame
 
 class Player_Child(pygame.sprite.Sprite):
 
-    def __init__(self, x, y, scale, speed, gravity):
+    def __init__(self, x, y, scale, speed = 3, gravity = 0.75):
         super().__init__()
         
         img = pygame.image.load("Assets\\Player\\player_idle.png").convert_alpha()

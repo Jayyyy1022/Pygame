@@ -95,16 +95,23 @@ class Sparkle:
         ])
 
 class Snow:
-    def __init__(self, screen_width, screen_height, speed_offset = 0, drift_offset = 0):
+    def __init__(self, screen_width, screen_height, speed_offset = 0, drift_offset = 0, start_at_top = False):
         self.sw = screen_width
         self.sh = screen_height
         self.speed_offset = speed_offset
         self.drift_offset = drift_offset
-        self.reset(True)
+        self.start_at_top = start_at_top
+        self.reset(first_time = not start_at_top, is_initial = start_at_top)
 
-    def reset(self, first_time=False):
+    def reset(self, first_time = False, is_initial = False):
         self.x = random.randint(0, self.sw)
-        self.y = random.randint(0, self.sh) if first_time else random.randint(-50, -10)
+        if first_time:
+            self.y = random.randint(0, self.sh)
+        elif is_initial:
+            self.y = random.randint(-1200, -10)
+        else:
+            self.y = random.randint(-100, -10)
+        
         
         self.size = random.randint(2, 4)
         self.fall_speed = random.uniform(1.5, 3.5) + self.speed_offset
