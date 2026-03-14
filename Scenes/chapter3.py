@@ -18,6 +18,9 @@ GRAVITY = 0.75
 
 ## colors
 BLIZZARD_NIGHT = (24, 29, 74)
+BLIZZARD_FILTER = (68, 76, 148)
+BEIGE_WALL = (227, 205, 163)
+WARM = (189, 128, 108)
 BROWN_FLOOR = (115, 65, 41)
 RED_OBJECT = (210, 34, 21)
 PRESENT_COLOR = (150, 20, 240)
@@ -83,7 +86,8 @@ default_hint = "[J] Interact"
 present_text = "Merry Christmas! ~Mom and Dad"
 window_text = "I can't reach the windowsill..."
 tree_text = "I wonder how they got this tree in."
-bed_text = "        I'd rather stay awake for now..."
+bed_text = "I'd rather stay awake for now..."
+door_text = "Maybe later..."
 
 # room_objects = pygame.sprite.OrderedUpdates(bed, christmas_tree) ## no particular order ## use ordered updates 
 
@@ -123,20 +127,34 @@ class Chapter3:
         self.right_wall = pygame.Rect(775, -50, 35, 600)
         self.ceiling = pygame.Rect(-50, -50, 900, 80)
 
-        self.bed = pygame.Rect(LEFT_WALL_X, (GROUND_Y - 80), 170, 80)
+        self.bed = pygame.Rect(LEFT_WALL_X, (GROUND_Y - 112), 238, 112)
         self.window = pygame.Rect((LEFT_WALL_X + 210), 240, 220, 200)
         self.christmas_tree = pygame.Rect((RIGHT_WALL_X - 245), (GROUND_Y - 300), 180, 300)
         self.door = pygame.Rect((RIGHT_WALL_X - 15), (GROUND_Y - 175), 15, 175)
         self.present = pygame.Rect((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50)
 
-        self.window_glass = pygame.Surface((self.window.width, self.window.height))
+        self.bed_prop = prop.BackgroundDecoration(self.bed.left - 3, self.bed.top + 2, "Assets\\Objects\\house_bed.png", 238, 112)
+        self.window_prop = prop.BackgroundDecoration(self.window.left - 22, self.window.top - 28, "Assets\\Objects\\window_small.png", 264, 240)
+        self.christmas_tree_prop = prop.BackgroundDecoration(self.christmas_tree.left, self.christmas_tree.top, "Assets\\Objects\\green_christmas_tree.png", 180, 300)
+        self.door_prop = prop.BackgroundDecoration(self.door.left - 15, self.door.top, "Assets\\Objects\\house_door.png", 31, 175)
+        self.present_prop = prop.BackgroundDecoration(self.present.left, self.present.top + 5, "Assets\\Objects\\present_unopened.png", 50, 50)
+        self.photo_frame_prop = prop.BackgroundDecoration(self.bed.left - 1, self.bed.top - 220, "Assets\\Objects\\house_photo_frame.png", 23, 136)
+        self.star_prop = prop.BackgroundDecoration(self.christmas_tree.left + 79, self.christmas_tree.top - 22, "Assets\\Objects\\star.png", 23.5, 24.4)
+        
+        self.props = pygame.sprite.OrderedUpdates()
+        self.props.add(self.window_prop, self.bed_prop, self.photo_frame_prop, 
+                       self.christmas_tree_prop, self.star_prop, self.present_prop, self.door_prop)
+
+        self.window_glass = pygame.Surface((self.window.width, self.window.height)).convert_alpha()
+        self.outside_window = pygame.image.load("Assets\\Backgrounds\\snowy_landscape_3.png").convert_alpha()
+
 
         self.interactables = [
             {"name": "present", "rect": self.present, "hint": "[J] Open", "text": present_text, "sound": self.interact_sound, "position": ((self.present.x + 25), (self.present.y - 10))},
-            {"name": "window", "rect": self.window, "hint": "[J] Look outside", "text": window_text, "sound": self.interact_sound, "position": ((self.window.x + 110), (self.window.y - 10))},
-            {"name": "tree", "rect": self.christmas_tree, "hint": default_hint, "text": tree_text, "sound": self.interact_sound, "position": ((self.christmas_tree.x + 90), (self.christmas_tree.y - 10))},
-            {"name": "bed", "rect": self.bed, "hint": "[J] Sleep", "text": bed_text, "sound": self.interact_sound, "position": ((self.bed.x + 85), (self.bed.y - 10))},
-            {"name": "door", "rect": self.door, "hint": "[J] Open", "text": "There's nobody outside.", "sound": self.interact_sound, "position": ((self.door.x - 25), (self.door.y - 10))}
+            {"name": "window", "rect": self.window, "hint": "[J] Look outside", "text": window_text, "sound": self.interact_sound, "position": ((self.window.x + 110), (self.window.y - 40))},
+            {"name": "tree", "rect": self.christmas_tree, "hint": default_hint, "text": tree_text, "sound": self.interact_sound, "position": ((self.christmas_tree.x + 90), (self.christmas_tree.y - 30))},
+            {"name": "bed", "rect": self.bed, "hint": "[J] Sleep", "text": bed_text, "sound": self.interact_sound, "position": ((self.bed.x + 119), (self.bed.y))},
+            {"name": "door", "rect": self.door, "hint": "[J] Open", "text": door_text, "sound": self.interact_sound, "position": ((self.door.x - 25), (self.door.y - 10))}
         ]
 
         # self.doorParticles = []
@@ -170,6 +188,7 @@ class Chapter3:
         self.platforms.add(platform.Platform(-50, GROUND_Y, 900, 120, BROWN_FLOOR))
         self.platforms.add(platform.Platform(-10, -50, 35, 600, BROWN_FLOOR))
         self.platforms.add(platform.Platform(775, -50, 35, 600, BROWN_FLOOR))
+        self.platforms.add(platform.Platform(-50, -50, 900, 80, BROWN_FLOOR))
 
     def setup_level(self):
         self.state = "NORMAL"
@@ -192,9 +211,9 @@ class Chapter3:
         self.doorParticles = []
         self.isDoorBroken = False
         self.starSparkles = []
-        self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 4), (self.christmas_tree.top - 8))) ## have to change the pos so that it matches assets ltr
-        self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 7), (self.christmas_tree.top - 4)))
-        self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx - 6), (self.christmas_tree.top - 1)))
+        self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 14), (self.christmas_tree.top - 25))) ## have to change the pos so that it matches assets ltr
+        self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 12), (self.christmas_tree.top - 18)))
+        self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx - 11), (self.christmas_tree.top - 1)))
         self.snowParticles = []
         for _ in range(200):
             self.snowParticles.append(particles.Snow(800, 600, 2, -4))
@@ -364,8 +383,12 @@ class Chapter3:
                 self.draw_text(display_text, WHITE, current_touching_object["position"][0], current_touching_object["position"][1])
 
     def draw_room(self):
-        self.display.fill(BLIZZARD_NIGHT)
+        self.display.fill(WARM)
         self.play_bgm(0, 4000)
+
+        self.window_glass.blit(self.outside_window, (0, 0))
+        self.apply_color_filter(self.window_glass, BLIZZARD_FILTER)
+        self.display.blit(self.window_glass, (self.window.x, self.window.y))
 
         ## snow thru window
         self.display.set_clip(self.window) 
@@ -374,18 +397,19 @@ class Chapter3:
             snow.draw(self.display)
         self.display.set_clip(None)
 
-        self.window_glass.set_alpha(85)
-        self.window_glass.fill(WINDOW_GLASS_COLOR)
-        self.display.blit(self.window_glass, (self.window.x, self.window.y))
-
+        self.props.draw(self.display)
         self.platforms.draw(self.display)
-        self.draw_props_rect(BROWN_FLOOR, self.ceiling)
-        self.draw_props_rect(RED_OBJECT, self.bed)
-        # self.draw_props_rect(RED_OBJECT, window)
-        self.draw_props_rect(RED_OBJECT, self.christmas_tree)
-        self.draw_props_rect(PRESENT_COLOR, self.present)
-        if self.state not in ["BREAKING", "INCHING", "RUSH"]:
-            self.draw_props_rect(RED_OBJECT, self.door)
+        # self.draw_props_rect(BROWN_FLOOR, self.ceiling)
+        # self.draw_props_rect(RED_OBJECT, self.bed)
+        # # self.draw_props_rect(RED_OBJECT, window)
+        # self.draw_props_rect(RED_OBJECT, self.christmas_tree)
+        # self.draw_props_rect(PRESENT_COLOR, self.present)
+        
+        # if self.state not in ["BREAKING", "INCHING", "RUSH"]:
+        #     self.draw_props_rect(RED_OBJECT, self.door)
+
+        if self.state in ["BREAKING", "INCHING", "RUSH"]:
+            pygame.sprite.Sprite.kill(self.door_prop)
 
         for sparkle in self.starSparkles:
             sparkle.update()
@@ -428,3 +452,8 @@ class Chapter3:
     def play_bgm(self, startTime, fadeIn):
         if not pygame.mixer.music.get_busy() and self.state in ["NORMAL", "CREDITS"]:
             pygame.mixer.music.play(-1, startTime, fadeIn)
+
+    def apply_color_filter(self, surface, color):
+        filter = pygame.Surface(surface.get_size()).convert_alpha()
+        filter.fill(color)
+        surface.blit(filter, (0, 0), special_flags=pygame.BLEND_RGB_MULT)

@@ -5,7 +5,7 @@ class Enemy_Krampus(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
 
         ## Frames
-        img = pygame.image.load("Assets\\Enemy\\enemy_idle.png")
+        img = pygame.image.load("Assets\\Enemy\\enemy_idle.png").convert_alpha()
         self.img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
         self.rect = self.img.get_rect()
         self.rect.center = (x, y)

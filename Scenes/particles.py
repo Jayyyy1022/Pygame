@@ -75,7 +75,7 @@ class Sparkle:
         
         flicker = random.randint(-20, 20)
         self.current_color = (
-            max(0, min(255, self.color[0] + flicker)),
+            max(100, min(255, self.color[0] + flicker)),
             max(0, min(255, self.color[1] + flicker)),
             0
         )

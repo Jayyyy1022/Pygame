@@ -5,7 +5,7 @@ class Player_Child(pygame.sprite.Sprite):
     def __init__(self, x, y, scale, speed, gravity):
         super().__init__()
         
-        img = pygame.image.load("Assets\\Player\\player_idle.png")
+        img = pygame.image.load("Assets\\Player\\player_idle.png").convert_alpha()
         self.img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
         self.rect = self.img.get_rect()
         self.rect.center = (x, y)
@@ -32,7 +32,7 @@ class Player_Child(pygame.sprite.Sprite):
         self.isCutscene = False
 
     def move(self, platforms):
-        if self.isCutscene:
+        if self.isCutscene or not self.isAlive:
             return
         keys = pygame.key.get_pressed()
         
