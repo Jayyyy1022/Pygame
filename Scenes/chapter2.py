@@ -597,13 +597,20 @@ def scene3():
 # ---------------- SCENE 4 EXIT ----------------
 def scene4():
 
-    global light_radius
+    global light_radius, current_bgm
 
-    player = Player(10, 430, 0.1, 4, 0.5)
+    player = Player(10, 430, 0.1, 2, 0.5)
 
     platforms = [
         Platform(0, 500, WIDTH, 100)
     ]
+
+    # --- Scene 4 Krampus setup ---
+    krampus = Krampus(0, 430, 0.2, 2, 0.5)  # start off-screen left
+    krampus_active = False                        # spawn after delay
+    krampus_speed = 390                           # pixels per second
+    krampus_spawn_delay = 2                       # 2 second delay
+    krampus_timer = 0                              # timer to track delay
 
     running = True
 
@@ -612,21 +619,49 @@ def scene4():
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
-
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
+        # --- Player movement ---
         player.move(platforms)
-        
+
         if player.rect.left < 0:
             player.rect.left = 0
 
+        # --- Krampus spawn delay ---
+        if not krampus_active:
+            krampus_timer += dt
+            if krampus_timer >= krampus_spawn_delay:
+                krampus_active = True
+
+        # --- Krampus movement ---
+        if krampus_active:
+            if krampus.rect.x < player.rect.x - 50:  # stop a little behind player
+                krampus.rect.x += krampus_speed * dt
+                krampus.facingRight = True
+            else:
+                krampus.rect.x = player.rect.x - 50  # stop near player
+
+            # Draw Krampus
+            screen.blit(
+                pygame.transform.flip(krampus.img, not krampus.facingRight, False),
+                (krampus.rect.x, krampus.rect.y)
+            )
+
+            # Collision triggers game over
+            if player.rect.colliderect(krampus.rect):
+                game_over()
+                return
+
+        # --- Draw background ---
         screen.blit(ice_cave_bg3, (0, 0))
 
+        # --- Draw platforms ---
         for p in platforms:
             screen.blit(p.image, p.rect)
 
+        # --- Draw light cone ---
         cone_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
 
         pygame.draw.polygon(
@@ -643,8 +678,18 @@ def scene4():
 
         screen.blit(cone_surface, (0, 0))
 
+        # --- Draw player with torch ---
         draw_player_with_light(player)
+        
+        if krampus_active:
+            screen.blit(
+                pygame.transform.flip(krampus.img, not krampus.facingRight, False),
+                (krampus.rect.x, krampus.rect.y)
+            )
+            
+        draw_krampus_danger(player, krampus)
 
+        # --- Torch dimming ---
         if light_radius > 0:
             light_radius -= dim_speed * dt
         else:
@@ -652,10 +697,10 @@ def scene4():
 
         pygame.display.update()
 
-        # ---------------- Scene transition / exit ----------------
+        # --- Scene exit ---
         if player.rect.right >= WIDTH:
 
-            # Stop any BGM before exit sounds
+            # Stop BGM immediately
             pygame.mixer.music.stop()
             current_bgm = None
 
@@ -675,6 +720,13 @@ def scene4():
                     screen.blit(p.image, p.rect)
 
                 draw_player_with_light(player)
+
+                # draw Krampus during fade
+                if krampus_active:
+                    screen.blit(
+                        pygame.transform.flip(krampus.img, not krampus.facingRight, False),
+                        (krampus.rect.x, krampus.rect.y)
+                    )
 
                 screen.blit(flash, (0, 0))
                 
@@ -701,7 +753,7 @@ def scene4():
 
 
 # ---------------- START ----------------
-scene1()
+scene4()
 
 pygame.quit()
 sys.exit()
