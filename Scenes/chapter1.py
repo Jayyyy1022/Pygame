@@ -13,8 +13,8 @@ from Entities.Obstacle.platform import Platform
 from Entities.Decoration.prop import BackgroundDecoration
 
 class Chapter1:
-    def __init__(self, screen, gameStateManager):
-        self.screen = screen
+    def __init__(self, display, gameStateManager):
+        self.display = display
         self.gameStateManager = gameStateManager
         self.isInitialized = False
         
@@ -22,8 +22,8 @@ class Chapter1:
     def setup_level(self):
         """Handles all initialization, asset loading, and variable resetting."""
         self.FPS = 60
-        self.SCREEN_WIDTH = self.screen.get_width()
-        self.SCREEN_HEIGHT = self.screen.get_height()
+        self.SCREEN_WIDTH = self.display.get_width()
+        self.SCREEN_HEIGHT = self.display.get_height()
         self.GRAVITY = 0.75
         self.MOVEMENT_SPEED = 3
 
@@ -142,8 +142,8 @@ class Chapter1:
         shadow_surf = self.ui_font.render(text_string, True, (0, 0, 0)) 
         x = self.player.rect.centerx - text_surf.get_width() // 2
         y = self.player.rect.top - 35
-        self.screen.blit(shadow_surf, (x + 2, y + 2)) 
-        self.screen.blit(text_surf, (x, y))
+        self.display.blit(shadow_surf, (x + 2, y + 2)) 
+        self.display.blit(text_surf, (x, y))
 
     def run(self, events):
         """Main update loop called every frame by game.py"""
@@ -261,12 +261,12 @@ class Chapter1:
             return
 
         ## --- 5. RENDERING ---
-        self.screen.fill(self.current_bg_color) 
+        self.display.fill(self.current_bg_color) 
         
         if self.bg_surface:
             scroll_offset = (self.camera_scroll * 0.3) % self.SCREEN_WIDTH
-            self.screen.blit(self.bg_surface, (-scroll_offset, 0))
-            self.screen.blit(self.bg_surface, (-scroll_offset + self.SCREEN_WIDTH, 0))
+            self.display.blit(self.bg_surface, (-scroll_offset, 0))
+            self.display.blit(self.bg_surface, (-scroll_offset + self.SCREEN_WIDTH, 0))
                 
         for flake in self.snowflakes:
             flake[1] += flake[2] 
@@ -274,33 +274,33 @@ class Chapter1:
             if flake[1] > self.SCREEN_HEIGHT:
                 flake[1] = random.randrange(-50, -10)
                 flake[0] = random.randrange(0, self.SCREEN_WIDTH)
-            pygame.draw.circle(self.screen, (255, 255, 255), (flake[0], flake[1]), flake[3])
+            pygame.draw.circle(self.display, (255, 255, 255), (flake[0], flake[1]), flake[3])
         
-        self.decorations.draw(self.screen)
+        self.decorations.draw(self.display)
 
         wall_color = (130, 95, 65) 
-        pygame.draw.rect(self.screen, wall_color, (self.room_x + 40, 150, 460, 30))
-        pygame.draw.rect(self.screen, wall_color, (self.room_x + 40, 470, 460, 30))
-        pygame.draw.rect(self.screen, wall_color, (self.room_x + 40, 180, 60, 290))
-        pygame.draw.rect(self.screen, wall_color, (self.room_x + 250, 180, 50, 290))
-        pygame.draw.rect(self.screen, wall_color, (self.room_x + 450, 180, 50, 290))
+        pygame.draw.rect(self.display, wall_color, (self.room_x + 40, 150, 460, 30))
+        pygame.draw.rect(self.display, wall_color, (self.room_x + 40, 470, 460, 30))
+        pygame.draw.rect(self.display, wall_color, (self.room_x + 40, 180, 60, 290))
+        pygame.draw.rect(self.display, wall_color, (self.room_x + 250, 180, 50, 290))
+        pygame.draw.rect(self.display, wall_color, (self.room_x + 450, 180, 50, 290))
 
         glass_surface = pygame.Surface((150, 290), pygame.SRCALPHA)
         glass_surface.fill((150, 200, 255, 25)) 
-        self.screen.blit(glass_surface, (self.room_x + 100, 180)) 
-        self.screen.blit(glass_surface, (self.room_x + 300, 180)) 
+        self.display.blit(glass_surface, (self.room_x + 100, 180)) 
+        self.display.blit(glass_surface, (self.room_x + 300, 180)) 
         
         frame_color = (80, 50, 30) 
-        pygame.draw.rect(self.screen, frame_color, (self.room_x + 100, 180, 150, 290), 4)
-        pygame.draw.rect(self.screen, frame_color, (self.room_x + 300, 180, 150, 290), 4)
-        pygame.draw.line(self.screen, frame_color, (self.room_x + 175, 180), (self.room_x + 175, 470), 4)
-        pygame.draw.line(self.screen, frame_color, (self.room_x + 375, 180), (self.room_x + 375, 470), 4)
-        pygame.draw.line(self.screen, frame_color, (self.room_x + 100, 325), (self.room_x + 250, 325), 4)
-        pygame.draw.line(self.screen, frame_color, (self.room_x + 300, 325), (self.room_x + 450, 325), 4)
+        pygame.draw.rect(self.display, frame_color, (self.room_x + 100, 180, 150, 290), 4)
+        pygame.draw.rect(self.display, frame_color, (self.room_x + 300, 180, 150, 290), 4)
+        pygame.draw.line(self.display, frame_color, (self.room_x + 175, 180), (self.room_x + 175, 470), 4)
+        pygame.draw.line(self.display, frame_color, (self.room_x + 375, 180), (self.room_x + 375, 470), 4)
+        pygame.draw.line(self.display, frame_color, (self.room_x + 100, 325), (self.room_x + 250, 325), 4)
+        pygame.draw.line(self.display, frame_color, (self.room_x + 300, 325), (self.room_x + 450, 325), 4)
 
-        pygame.draw.rect(self.screen, (70, 30, 30), (self.room_x + 380, 40, 40, 110))
+        pygame.draw.rect(self.display, (70, 30, 30), (self.room_x + 380, 40, 40, 110))
 
-        pygame.draw.polygon(self.screen, (50, 30, 20), [
+        pygame.draw.polygon(self.display, (50, 30, 20), [
             (self.room_x - 50, 150),    
             (self.room_x + 600, 150),   
             (self.room_x + 275, 10)     
@@ -317,31 +317,32 @@ class Chapter1:
             if smoke[1] < -50 or smoke[2] > 25:
                 self.smoke_particles.remove(smoke)
             else:
-                pygame.draw.circle(self.screen, (120, 120, 120), (int(smoke[0]), int(smoke[1])), int(smoke[2]))
+                pygame.draw.circle(self.display, (120, 120, 120), (int(smoke[0]), int(smoke[1])), int(smoke[2]))
 
-        self.platforms.draw(self.screen)
+        self.platforms.draw(self.display)
         
         door_shade = pygame.Surface((self.door.rect.width, self.door.rect.height), pygame.SRCALPHA)
         door_shade.fill((0, 0, 0, 80)) 
-        self.screen.blit(door_shade, (self.door.rect.x, self.door.rect.y))
-        pygame.draw.rect(self.screen, (60, 35, 20), self.door.rect, 4)
-        pygame.draw.circle(self.screen, (220, 180, 50), (self.door.rect.x + 15, self.door.rect.y + 80), 6)
-        pygame.draw.circle(self.screen, (120, 80, 20), (self.door.rect.x + 15, self.door.rect.y + 80), 6, 2)
+        self.display.blit(door_shade, (self.door.rect.x, self.door.rect.y))
+        pygame.draw.rect(self.display, (60, 35, 20), self.door.rect, 4)
+        pygame.draw.circle(self.display, (220, 180, 50), (self.door.rect.x + 15, self.door.rect.y + 80), 6)
+        pygame.draw.circle(self.display, (120, 80, 20), (self.door.rect.x + 15, self.door.rect.y + 80), 6, 2)
 
-        self.player.draw(self.screen)
-        self.enemy.draw(self.screen)
+        self.player.draw(self.display)
+        self.enemy.draw(self.display)
+        self.draw_ui_esc(events)
 
         ## --- OVERLAY EFFECTS & UI TEXT ---
         darkness_filter = pygame.Surface((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.SRCALPHA)
         darkness_filter.fill((0, 5, 15, 110)) 
-        self.screen.blit(darkness_filter, (0, 0))
+        self.display.blit(darkness_filter, (0, 0))
 
         if self.fade_alpha > 0:
             self.fade_alpha -= 2   
             fade_surf = pygame.Surface((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
             fade_surf.fill((0, 0, 0))
             fade_surf.set_alpha(self.fade_alpha)
-            self.screen.blit(fade_surf, (0, 0))
+            self.display.blit(fade_surf, (0, 0))
         else:
             if self.intro_state == 1:
                 self.draw_floating_text("Is it a dream...?")
@@ -372,12 +373,44 @@ class Chapter1:
             door_fade_surf = pygame.Surface((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
             door_fade_surf.fill((0, 0, 0))
             door_fade_surf.set_alpha(self.door_fade_alpha)
-            self.screen.blit(door_fade_surf, (0, 0))
+            self.display.blit(door_fade_surf, (0, 0))
 
-## --- Allow chapter1.py to be run as a standalone script ---
-# if __name__ == "__main__":
-#     pygame.init()
-#     screen = pygame.display.set_mode((800, 600))
-#     pygame.display.set_caption("Good Night, Sleep Tight - Chapter 1")
-#     run(screen)
-#     pygame.quit()
+
+    def draw_ui_esc(self, events):
+        btn_width, btn_height = 120, 40
+        btn_rect = pygame.Rect(20, 20, btn_width, btn_height)
+        mouse_pos = pygame.mouse.get_pos()
+        
+        is_hover = btn_rect.collidepoint(mouse_pos)
+
+        bg_alpha = 200 if is_hover else 150  
+        bg_color = (40, 40, 40) if is_hover else (0, 0, 0)
+        
+        temp_surf = pygame.Surface((btn_width, btn_height), pygame.SRCALPHA)
+        
+        pygame.draw.rect(temp_surf, (*bg_color, bg_alpha), (0, 0, btn_width, btn_height), border_radius=5)
+        
+        esc_font = pygame.font.SysFont("Arial", 20, bold=True)
+        txt_surf = esc_font.render("[ESC] Menu", True, (255, 255, 255))
+        txt_rect = txt_surf.get_rect(center=(btn_width // 2 - 1, btn_height // 2 - 1))
+        
+        txt_surf.set_alpha(bg_alpha)
+        temp_surf.blit(txt_surf, txt_rect)
+        
+        self.display.blit(temp_surf, (btn_rect.x, btn_rect.y))
+
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if is_hover:
+                    self.return_to_menu()
+            
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.return_to_menu()
+
+    def return_to_menu(self):
+        pygame.mixer.stop()
+        pygame.mixer.music.stop()
+        
+        self.gameStateManager.set_state("menu")
+        self.isInitialized = False

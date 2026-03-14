@@ -309,6 +309,7 @@ class Chapter3:
         if self.state in ["NORMAL", "KNOCKING"]:
             self.handle_interactions(events)
             self.player.move(self.platforms)
+            self.draw_ui_esc(events)
         
         if self.state not in ["BLACKOUT", "CREDITS"]:
             self.player.draw(self.display)
@@ -456,3 +457,42 @@ class Chapter3:
             particle.draw(self.display)
             if particle.life <= 0:
                 self.confettiParticles.remove(particle)
+
+    def draw_ui_esc(self, events):
+        btn_width, btn_height = 120, 40
+        btn_rect = pygame.Rect(20, 20, btn_width, btn_height)
+        mouse_pos = pygame.mouse.get_pos()
+        
+        is_hover = btn_rect.collidepoint(mouse_pos)
+
+        bg_alpha = 200 if is_hover else 150  
+        bg_color = (40, 40, 40) if is_hover else (0, 0, 0)
+        
+        temp_surf = pygame.Surface((btn_width, btn_height), pygame.SRCALPHA)
+    
+        pygame.draw.rect(temp_surf, (*bg_color, bg_alpha), (0, 0, btn_width, btn_height), border_radius=5)
+        
+        esc_font = pygame.font.SysFont("Arial", 20, bold=True)
+        txt_surf = esc_font.render("[ESC] Menu", True, (255, 255, 255))
+        txt_rect = txt_surf.get_rect(center=(btn_width // 2 - 1, btn_height // 2 - 1))
+        
+        txt_surf.set_alpha(bg_alpha)
+        temp_surf.blit(txt_surf, txt_rect)
+        
+        self.display.blit(temp_surf, (btn_rect.x, btn_rect.y))
+
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if is_hover:
+                    self.return_to_menu()
+            
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.return_to_menu()
+
+    def return_to_menu(self):
+        pygame.mixer.stop()
+        pygame.mixer.music.stop()
+        
+        self.gameStateManager.set_state("menu")
+        self.isInitialized = False

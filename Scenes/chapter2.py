@@ -12,9 +12,9 @@ from Entities.Obstacle.platform import Platform
 from Entities.Obstacle.falling_rock import FallingRock
 
 class Chapter2:
-    def __init__(self, screen, game_state_manager):
-        self.screen = screen
-        self.gsm = game_state_manager
+    def __init__(self, display, game_state_manager):
+        self.display = display
+        self.gameStateManager = game_state_manager
         self.WIDTH, self.HEIGHT = 800, 600
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 30)
@@ -22,7 +22,7 @@ class Chapter2:
         # ---------------- SETTINGS & STATE ----------------
         self.light_radius = 200
         self.dim_speed = 2
-        self.is_initialized = False
+        self.isInitialized = False
         self.current_scene = "scene1"
         self.current_bgm = None
         self.ghost_playing = False
@@ -162,7 +162,7 @@ class Chapter2:
         pygame.mixer.music.stop()
         self.current_bgm = None # Force BGM reload on respawn
 
-        self.screen.fill((0, 0, 0))
+        self.display.fill((0, 0, 0))
         pygame.display.update()
         pygame.time.delay(800)
         self.jumpscare_sound.play()
@@ -170,16 +170,16 @@ class Chapter2:
         # White flash
         flash = pygame.Surface((self.WIDTH, self.HEIGHT))
         flash.fill((255, 255, 255))
-        self.screen.blit(flash, (0, 0))
+        self.display.blit(flash, (0, 0))
         pygame.display.update()
         pygame.time.delay(200)
 
         # Black screen and text (Mimicking original red text logic)
-        self.screen.fill((0, 0, 0))
+        self.display.fill((0, 0, 0))
         pygame.display.update()
         pygame.time.delay(1200)
         text = self.font.render("You were caught by Krampus...", True, (255, 0, 0))
-        self.screen.blit(text, (self.WIDTH // 2 - 160, self.HEIGHT // 2))
+        self.display.blit(text, (self.WIDTH // 2 - 160, self.HEIGHT // 2))
         pygame.display.update()
         pygame.time.delay(2000)
 
@@ -188,7 +188,7 @@ class Chapter2:
 
     def draw_player_with_light(self, player):
         """Mimics LIGHT SYSTEM logic."""
-        player.draw(self.screen)
+        player.draw(self.display)
         darkness = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
         center = player.rect.center
         
@@ -201,7 +201,7 @@ class Chapter2:
         if self.light_radius < 40 and pygame.time.get_ticks() % 500 < 40: rad = 5
         
         pygame.draw.circle(darkness, (0, 0, 0, 0), center, int(rad))
-        self.screen.blit(darkness, (0, 0))
+        self.display.blit(darkness, (0, 0))
 
         if self.light_radius <= 150:
             if not self.ghost_playing:
@@ -216,14 +216,14 @@ class Chapter2:
             intensity = int((1 - dist / 200) * 120)
             overlay = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
             overlay.fill((255, 0, 0, intensity))
-            self.screen.blit(overlay, (0, 0))
+            self.display.blit(overlay, (0, 0))
 
     def run(self, events):
         """Entry point from game.py."""
-        if not self.is_initialized:
+        if not self.isInitialized:
             self.load_assets()
             self.setup_scene("scene1")
-            self.is_initialized = True
+            self.isInitialized = True
 
         dt = self.clock.tick(60) / 1000
 
@@ -245,6 +245,7 @@ class Chapter2:
             self.light_radius -= self.dim_speed * dt
         else:
             self.game_over()
+        self.draw_ui_esc(events)
 
     def update_scene1(self, dt):
         self.player.move(self.platforms)
@@ -262,15 +263,15 @@ class Chapter2:
         self.prev_on_ground = on_ground
 
         # --- Draw background and platforms ---
-        self.screen.blit(self.ice_cave_bg, (0, 0))
+        self.display.blit(self.ice_cave_bg, (0, 0))
         for p in self.platforms: 
-            self.screen.blit(p.image, p.rect)
-        self.screen.blit(self.sign, self.sign_rect)
+            self.display.blit(p.image, p.rect)
+        self.display.blit(self.sign, self.sign_rect)
 
         # --- Scene 1 light cone ---
         cone_surface = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
         pygame.draw.polygon(cone_surface, (255, 255, 200, 120), [(80, 0), (160, 0), (250, self.HEIGHT), (0, self.HEIGHT)])
-        self.screen.blit(cone_surface, (0, 0))
+        self.display.blit(cone_surface, (0, 0))
 
         # --- Dialogue handling ---
         if self.dialogue_stage > 0:
@@ -317,18 +318,18 @@ class Chapter2:
             return
 
         # --- Draw background ---
-        self.screen.blit(self.ice_cave_bg2, (0, 0))
+        self.display.blit(self.ice_cave_bg2, (0, 0))
 
         # --- Draw platforms ---
         for p in self.platforms:
             p.image = pygame.transform.scale(self.cave_platform, (p.rect.width, p.rect.height))
-            self.screen.blit(p.image, p.rect)
+            self.display.blit(p.image, p.rect)
 
         # --- Draw key ---
-        if not self.key_collected: self.screen.blit(self.key_image, self.key_rect.topleft)
+        if not self.key_collected: self.display.blit(self.key_image, self.key_rect.topleft)
 
         # --- Draw exit door ---
-        if self.door_visible: self.screen.blit(self.door_image, self.door_rect.topleft)
+        if self.door_visible: self.display.blit(self.door_image, self.door_rect.topleft)
 
         # Dialogue
         if not self.scene2_entry_dialogue_shown:
@@ -390,15 +391,15 @@ class Chapter2:
                 self.first_shake_done = True
 
         # --- Draw background ---
-        self.screen.blit(self.ice_cave_bg2, (sx, sy))
+        self.display.blit(self.ice_cave_bg2, (sx, sy))
 
         # --- Draw platforms ---
         for p in self.platforms: 
-            self.screen.blit(p.image, (p.rect.x - cam_x + sx, p.rect.y + sy))
+            self.display.blit(p.image, (p.rect.x - cam_x + sx, p.rect.y + sy))
         
         # --- Draw ceiling pillars + collision logic ---
         for p in self.pillars: 
-            self.screen.blit(p.image, (p.rect.x - cam_x + sx, p.rect.y + sy))
+            self.display.blit(p.image, (p.rect.x - cam_x + sx, p.rect.y + sy))
             if self.player.rect.colliderect(p.rect):
                 if self.player.rect.centery < p.rect.centery: self.player.rect.bottom = p.rect.top
                 else: self.player.rect.top = p.rect.bottom
@@ -407,7 +408,7 @@ class Chapter2:
         # --- Update and draw falling rocks + collision logic ---
         for r in self.falling_rocks:
             r.update(dt, self.platforms, self.falling_rocks)
-            r.draw(self.screen, cam_x, sy)
+            r.draw(self.display, cam_x, sy)
             if r.solid and self.player.rect.colliderect(r.rect):
                 if self.player.rect.centerx < r.rect.centerx: self.player.rect.right = r.rect.left
                 else: self.player.rect.left = r.rect.right
@@ -427,7 +428,7 @@ class Chapter2:
 
         # --- Krampus Collisions ---
         if self.krampus_active:
-            self.screen.blit(pygame.transform.flip(self.krampus.img, not self.krampus.facingRight, False), (self.krampus.rect.x - cam_x, self.krampus.rect.y))
+            self.display.blit(pygame.transform.flip(self.krampus.img, not self.krampus.facingRight, False), (self.krampus.rect.x - cam_x, self.krampus.rect.y))
             self.draw_krampus_danger(self.player, self.krampus)
             if self.player.rect.colliderect(self.krampus.rect): self.game_over()
 
@@ -448,15 +449,15 @@ class Chapter2:
                 self.krampus_active = True
 
         # --- Draw background ---
-        self.screen.blit(self.ice_cave_bg3, (0, 0))
+        self.display.blit(self.ice_cave_bg3, (0, 0))
 
         # --- Draw platforms ---
-        for p in self.platforms: self.screen.blit(p.image, p.rect)
+        for p in self.platforms: self.display.blit(p.image, p.rect)
         
         # --- Scene 4 Light Cone ---
         cone = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
         pygame.draw.polygon(cone, (255, 255, 200, 120), [(self.WIDTH, 260), (self.WIDTH-60, 200), (self.WIDTH-450, 450), (self.WIDTH-450, 520), (self.WIDTH-60, 360)])
-        self.screen.blit(cone, (0, 0))
+        self.display.blit(cone, (0, 0))
 
         # --- Krampus movement and drawing ---
         if self.krampus_active:
@@ -464,7 +465,7 @@ class Chapter2:
                 self.krampus.rect.x += self.krampus_speed * dt
                 self.krampus.facingRight = True
             else: self.krampus.rect.x = self.player.rect.x - 50
-            self.screen.blit(pygame.transform.flip(self.krampus.img, not self.krampus.facingRight, False), (self.krampus.rect.x, self.krampus.rect.y))
+            self.display.blit(pygame.transform.flip(self.krampus.img, not self.krampus.facingRight, False), (self.krampus.rect.x, self.krampus.rect.y))
             self.draw_krampus_danger(self.player, self.krampus)
             if self.player.rect.colliderect(self.krampus.rect): self.game_over()
 
@@ -491,28 +492,28 @@ class Chapter2:
             flash.fill((255, 255, 255))
             for alpha in range(0, 255, 5):
                 flash.set_alpha(alpha)
-                self.screen.blit(self.ice_cave_bg3, (0, 0))
+                self.display.blit(self.ice_cave_bg3, (0, 0))
 
                 for p in self.platforms: 
-                    self.screen.blit(p.image, p.rect)
+                    self.display.blit(p.image, p.rect)
 
                 self.draw_player_with_light(self.player)
                 
                 if self.krampus_active:
-                    self.screen.blit(pygame.transform.flip(self.krampus.img, not self.krampus.facingRight, False), (self.krampus.rect.x, self.krampus.rect.y))
+                    self.display.blit(pygame.transform.flip(self.krampus.img, not self.krampus.facingRight, False), (self.krampus.rect.x, self.krampus.rect.y))
 
-                self.screen.blit(flash, (0, 0))
+                self.display.blit(flash, (0, 0))
 
                 if alpha > 180:
                     txt = self.font.render("You hear a loud screeching from Krampus but you escaped...", True, (0, 0, 0))
-                    self.screen.blit(txt, (self.WIDTH // 2 - 300, self.HEIGHT // 2))
+                    self.display.blit(txt, (self.WIDTH // 2 - 300, self.HEIGHT // 2))
 
                 pygame.display.update()
                 pygame.time.delay(30)
             
             pygame.time.delay(6000)
-            self.is_initialized = False # Un-init to allow replays without closing the window
-            self.gsm.set_state("chapter3")
+            self.isInitialized = False # Un-init to allow replays without closing the window
+            self.gameStateManager.set_state("chapter3")
 
 
     # --- Handles all dialogue related stuff ---
@@ -520,5 +521,44 @@ class Chapter2:
         surf = self.font.render(text, True, (255, 255, 255))
         bw, bh = surf.get_width() + 12, surf.get_height() + 12
         bx, by = self.player.rect.centerx - bw//2, self.player.rect.y - offset
-        pygame.draw.rect(self.screen, (0, 0, 0), (bx, by, bw, bh))
-        self.screen.blit(surf, (bx + 6, by + 6))
+        pygame.draw.rect(self.display, (0, 0, 0), (bx, by, bw, bh))
+        self.display.blit(surf, (bx + 6, by + 6))
+
+    
+    def draw_ui_esc(self, events):
+        btn_width, btn_height = 120, 40
+        btn_rect = pygame.Rect(20, 20, btn_width, btn_height)
+        mouse_pos = pygame.mouse.get_pos()
+        
+        is_hover = btn_rect.collidepoint(mouse_pos)
+        bg_alpha = 200 if is_hover else 150  
+        bg_color = (40, 40, 40) if is_hover else (0, 0, 0)
+        
+        temp_surf = pygame.Surface((btn_width, btn_height), pygame.SRCALPHA)
+        
+        pygame.draw.rect(temp_surf, (*bg_color, bg_alpha), (0, 0, btn_width, btn_height), border_radius=5)
+        
+        esc_font = pygame.font.SysFont("Arial", 20, bold=True)
+        txt_surf = esc_font.render("[ESC] Menu", True, (255, 255, 255))
+        txt_rect = txt_surf.get_rect(center=(btn_width // 2 - 1, btn_height // 2 - 1))
+        
+        txt_surf.set_alpha(bg_alpha)
+        temp_surf.blit(txt_surf, txt_rect)
+        
+        self.display.blit(temp_surf, (btn_rect.x, btn_rect.y))
+
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if is_hover:
+                    self.return_to_menu()
+            
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.return_to_menu()
+
+    def return_to_menu(self):
+        pygame.mixer.stop()
+        pygame.mixer.music.stop()
+        
+        self.gameStateManager.set_state("menu")
+        self.isInitialized = False
