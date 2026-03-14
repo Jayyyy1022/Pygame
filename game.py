@@ -17,13 +17,11 @@ class Game:
 
         self.gameStateManager = gsm.GameStateManager("menu")
         self.start = Start(self.screen, self.gameStateManager)
-        self.level = Level(self.screen, self.gameStateManager)
         self.chapter1 = chapter1.Chapter1(self.screen, self.gameStateManager)
         self.chapter2 = chapter2.Chapter2(self.screen, self.gameStateManager)
         self.chapter3 = chapter3.Chapter3(self.screen, self.gameStateManager)
 
-        self.states = {"menu": self.start, "chapter1": self.chapter1, "chapter2": self.chapter2, "chapter3": self.chapter3, 
-                       "ending": self.level, "level": self.level}
+        self.states = {"menu": self.start, "chapter1": self.chapter1, "chapter2": self.chapter2, "chapter3": self.chapter3}
 
     def run(self):
         while True:
@@ -38,31 +36,7 @@ class Game:
             pygame.display.flip()
             self.clock.tick(FPS)
 
-# ignore these, placeholder for testing
-class Level:
-    def __init__(self, display, gameStateManager):
-        self.display = display
-        self.gameStateManager = gameStateManager
-        # self.music_stopped = False
-    
-    def run(self, events):
-    #     if not self.music_stopped:
-    #         pygame.mixer.music.stop()
-    #         pygame.mixer.music.unload()
-    #         pygame.mixer.stop()
-    #         self.music_stopped = True
-
-        self.display.fill("blue")
-        font = pygame.font.SysFont(None, 50)
-        text = font.render("CHAPTER 2 - CAVE", True, (255, 255, 255))
-        draw_text(self.display, "[p] chapter 3", (255,255,255), 400, 400)
-        self.display.blit(text, (200, 250))
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_p]:
-            self.gameStateManager.set_state("chapter3")
-
-
+## =-=-=-=-=-= MAIN MENU =-=-=-=-=-=-=-=
 class Start:
     def __init__(self, display, gameStateManager):
         self.display = display
@@ -71,7 +45,7 @@ class Start:
     def run(self, event):
         self.display.fill("red")
         draw_text(self.display, "[a] chapter 1", (255,255,255), 400, 250)
-        draw_text(self.display, "[b] chapter 2 (not yet implemented)", (255,255,255), 400, 275)
+        draw_text(self.display, "[b] chapter 2", (255,255,255), 400, 275)
         draw_text(self.display, "[c] chapter 3", (255,255,255), 400, 300)
 
         keys = pygame.key.get_pressed()
