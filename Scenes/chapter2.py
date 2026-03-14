@@ -10,6 +10,7 @@ from Entities.Player.player_child import Player_Child as Player
 from Entities.Enemy.enemy_krampus import Enemy_Krampus as Krampus
 from Entities.Obstacle.platform import Platform
 from Scenes import game_state_manager
+from Entities.Obstacle.falling_rock import FallingRock
 
 pygame.init()
 pygame.mixer.init()
@@ -345,100 +346,117 @@ def scene2():
 
 # ---------------- SCENE 3 MONSTER CHASE ----------------
 def scene3():
-
     global light_radius
 
     player = Player(10, 450, 0.1, 4, 0.5)
 
+    # ---------------- PLATFORMS ----------------
     platforms = [
-        Platform(0, 500, 400, 100),    # first section
-        Platform(400, 500, 400, 100),  # second section
-        Platform(800, 500, 400, 100),  # third section
+        Platform(0, 500, 400, 100),
+        Platform(400, 500, 400, 100),
+        Platform(800, 500, 400, 100),
         Platform(1200, 500, 400, 100),
-        Platform(1600, 500, 400, 100)   # exit section
-    ]
-    
-    obstacles = [
-        Platform(350, 460, 40, 40, image_path=rock_path),
-        Platform(750, 460, 40, 40, image_path=rock_path),
-        Platform(1100, 460, 40, 40, image_path=rock_path),
-        Platform(1450, 460, 40, 40, image_path=rock_path)
+        Platform(1600, 500, 400, 100),  # New mid-level platform
+        Platform(2000, 500, 400, 100)
     ]
 
+    # ---------------- KRAMPUS ----------------
     krampus = Krampus(player.rect.x, -50, 0.2, 2, 0.5)
+    monster_speed = 465
 
-    monster_speed = 350
+    # ---------------- CEILING PILLARS ----------------
+    pillars = []
+    pillar_width = 40
+    pillar_height = 350  # longer pillar
+    pillar_platforms = [
+        (400, 0, 2),    # top-left platform area
+        (850, 0, 1),   
+        (1200, 0, 3),  # middle platform area
+        (1600, 0, 2)   # new platform area
+    ]
+    for plat_x, plat_y, num_pillars in pillar_platforms:
+        for i in range(num_pillars):
+            spacing = 120
+            x_pos = plat_x + i * spacing
+            pillar = Platform(x_pos, plat_y, pillar_width, pillar_height)
+            # Flip rock image for ceiling
+            if os.path.exists(rock_path):
+                img = pygame.image.load(rock_path).convert_alpha()
+                img = pygame.transform.scale(img, (pillar_width, pillar_height))
+                img = pygame.transform.flip(img, False, True)  # upside down
+                pillar.image = img
+            pillars.append(pillar)
 
-    # --- Spawn delay ---
+    # ---------------- FALLING ROCKS ----------------
+    falling_rocks = []
+    rock_widths = [40, 50, 60]
+    rock_heights = [40, 50, 60]
+
+    # Ensure rocks spawn below the bottom of the tallest pillar
+    lowest_rock_y = pillar_height + 20  # leaves a small gap below pillars
+    stack_positions = [700, 1000, 1900, 2200]  # X positions
+    for stack_x in stack_positions:
+        y_offset = -50  # rocks start off-screen
+        for i in range(2):  # max 2 rocks per stack
+            width = random.choice(rock_widths)
+            height = random.choice(rock_heights)
+            rock_y = y_offset - i * height * 1.1
+            # Ensure rocks are not overlapping pillar bottom
+            if rock_y < lowest_rock_y:
+                rock_y = lowest_rock_y + random.randint(0, 30)
+            falling_rocks.append(FallingRock(
+                stack_x,
+                rock_y,
+                width,
+                height,
+                rock_path
+            ))
+
+    # ---------------- GAME LOOP ----------------
     spawn_delay = 2
     spawn_timer = 0
     krampus_active = False
     krampus_on_ground = False
-    shake_timer = 0
+    shake_timer = 0.8
     shake_strength = 8
 
     running = True
-
     while running:
-
         dt = clock.tick(60) / 1000
 
         for event in pygame.event.get():
-
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
         player.move(platforms)
-        
-        camera_x = player.rect.centerx - WIDTH // 2
+        camera_x = max(0, min(player.rect.centerx - WIDTH // 2, platforms[-1].rect.right - WIDTH))
 
-        if camera_x < 0:
-            camera_x = 0
-            
-        level_end = platforms[-1].rect.right
-        max_camera = level_end - WIDTH
-
-        if camera_x > max_camera:
-            camera_x = max_camera
-
-        # --- Spawn timer ---
+        # --- Krampus spawn ---
         spawn_timer += dt
-
         if spawn_timer >= spawn_delay and not krampus_active:
             krampus_active = True
             shake_timer = 0.8
             krampus_spawn_sound.play()
 
-        # --- Krampus behaviour ---
+        # --- Krampus movement ---
         if krampus_active:
-
-            # --- Falling ---
             if not krampus_on_ground:
-
                 krampus.rect.y += 900 * dt
-
                 for p in platforms:
-
                     if krampus.rect.bottom >= p.rect.top:
                         krampus.rect.bottom = p.rect.top
                         krampus_on_ground = True
-
-            # --- Chase after landing ---
             else:
-
                 if krampus.rect.x < player.rect.x:
                     krampus.rect.x += monster_speed * dt
                     krampus.facingRight = True
-
                 elif krampus.rect.x > player.rect.x:
                     krampus.rect.x -= monster_speed * dt
                     krampus.facingRight = False
 
-        # --- Screen shake offset ---
-        shake_x = 0
-        shake_y = 0
-
+        # --- Screen shake ---
+        shake_x = shake_y = 0
         if shake_timer > 0:
             shake_timer -= dt
             shake_x = random.randint(-shake_strength, shake_strength)
@@ -446,21 +464,23 @@ def scene3():
 
         # --- Draw background ---
         screen.blit(ice_cave_bg2, (shake_x, shake_y))
-        
 
+        # --- Draw platforms ---
         for p in platforms:
-            screen.blit(
-                p.image,
-                (p.rect.x - camera_x + shake_x, p.rect.y + shake_y)
-            )         
-            
-        # Draw obstacles
-        for obs in obstacles:
-            screen.blit(obs.image, (obs.rect.x - camera_x + shake_x, obs.rect.y + shake_y)) 
-        
+            screen.blit(p.image, (p.rect.x - camera_x + shake_x, p.rect.y + shake_y))
+
+        # --- Draw ceiling pillars ---
+        for pillar in pillars:
+            screen.blit(pillar.image, (pillar.rect.x - camera_x + shake_x, pillar.rect.y + shake_y))
+
+        # --- Update and draw falling rocks ---
+        for rock in falling_rocks:
+            rock.update(dt, platforms, falling_rocks)
+            rock.draw(screen, camera_x, shake_y)
+
         # --- Player torch ---
         original_x = player.rect.x
-        player.rect.x = player.rect.x - camera_x
+        player.rect.x -= camera_x
         draw_player_with_light(player)
         player.rect.x = original_x
 
@@ -472,21 +492,28 @@ def scene3():
             )
             draw_krampus_danger(player, krampus)
 
-        # --- Collision ---
+        # --- Collision with krampus ---
         if krampus_active and player.rect.colliderect(krampus.rect):
             game_over()
             return
-        
-        # --- Player collision with obstacles ---
-        for obs in obstacles:
-            if player.rect.colliderect(obs.rect):
-                # simple push back
-                if player.rect.centerx < obs.rect.centerx:
-                    player.rect.right = obs.rect.left
-                else:
-                    player.rect.left = obs.rect.right
 
-        # --- Torch dim ---
+        # --- Collision with rocks ---
+        for rock in falling_rocks:
+            if rock.solid and player.rect.colliderect(rock.rect):
+                if player.rect.centerx < rock.rect.centerx:
+                    player.rect.right = rock.rect.left
+                else:
+                    player.rect.left = rock.rect.right
+
+        # --- Collision with ceiling pillars ---
+        for pillar in pillars:
+            if player.rect.colliderect(pillar.rect):
+                if player.rect.centery < pillar.rect.centery:
+                    player.rect.bottom = pillar.rect.top
+                else:
+                    player.rect.top = pillar.rect.bottom
+
+        # --- Torch dimming ---
         if light_radius > 0:
             light_radius -= dim_speed * dt
         else:
@@ -495,12 +522,9 @@ def scene3():
         pygame.display.update()
 
         # --- Scene transition ---
-        level_end = platforms[-1].rect.right
-
-        if player.rect.right >= level_end:
+        if player.rect.right >= platforms[-1].rect.right:
             scene4()
             return
-
 
 # ---------------- SCENE 4 EXIT ----------------
 def scene4():
