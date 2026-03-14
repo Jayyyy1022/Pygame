@@ -3,6 +3,8 @@ import random
 import math
 
 BROWN_DOOR = (115, 65, 41)
+XMAS_CONFETTI_COLORS = [(210, 34, 21), (34, 139, 34), (255, 215, 0), (255, 255, 255)]
+
 
 class Particles(pygame.sprite.Sprite):
     def __init__(self, groups: pygame.sprite.Group, 
@@ -127,3 +129,45 @@ class Snow:
 
     def draw(self, surface):
         pygame.draw.circle(surface, "white", (int(self.x), int(self.y)), self.size)
+
+
+class Confetti:
+    def __init__(self, x, y, colors: list[tuple] = XMAS_CONFETTI_COLORS, angle_start = -135, angle_end = -45):
+        self.x = x
+        self.y = y
+        self.size = random.randint(3, 6)
+        self.color = random.choice(colors)
+        
+        angle = math.radians(random.uniform(angle_start, angle_end))
+        speed = random.uniform(4, 8)
+        
+        self.vx = math.cos(angle) * speed
+        self.vy = math.sin(angle) * speed
+        self.gravity = 0.2
+        self.life = 255
+        self.rotation = random.uniform(0, math.pi * 2)
+        self.rot_speed = random.uniform(-0.2, 0.2)
+
+    def update(self):
+        self.x += self.vx
+        self.y += self.vy
+        self.vy += self.gravity
+        
+        self.vx *= 0.98
+        self.rotation += self.rot_speed
+
+        self.life -= 3
+
+    def draw(self, surface):
+        if self.life > 0:
+            # We create a small surface for alpha support
+            # Note: As discussed, this is the "consistent" but heavier way
+            s = self.size
+            surf = pygame.Surface((s * 2, s * 2), pygame.SRCALPHA)
+            
+            # Draw a simple rectangle or circle with alpha
+            # Using rotation to vary the width for a "flipping" paper look
+            width = abs(math.sin(self.rotation)) * s
+            pygame.draw.rect(surf, (*self.color, self.life), (s - width/2, 0, width, s))
+            
+            surface.blit(surf, (self.x - s, self.y - s))

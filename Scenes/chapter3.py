@@ -27,6 +27,7 @@ PRESENT_COLOR = (150, 20, 240)
 WINDOW_GLASS_COLOR = (200, 230, 255)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+XMAS_CONFETTI_COLORS = [(210, 34, 21), (34, 139, 34), (255, 215, 0), (255, 255, 255)]
 
 ## Music
 # pygame.mixer.init()
@@ -83,11 +84,13 @@ PLAYER_SIZE_SCALE = 0.1
 # font = pygame.font.SysFont(None, 25)
 
 default_hint = "[J] Interact"
-present_text = "Merry Christmas! ~Mom and Dad"
+present_text = "Merry Christmas!\n Love, Mom and Dad"
 window_text = "I can't reach the windowsill..."
 tree_text = "I wonder how they got this tree in."
 bed_text = "I'd rather stay awake for now..."
 door_text = "Maybe later..."
+dialogue_text = ["Oh...", ".. a nightmare..?", "Mom and dad left presents...", "I should check them out."]
+thank_you_dialogue = "Thanks mom... Thanks dad..."
 
 # room_objects = pygame.sprite.OrderedUpdates(bed, christmas_tree) ## no particular order ## use ordered updates 
 
@@ -116,12 +119,14 @@ class Chapter3:
         self.tension_horror_buildup.set_volume(0.4)
         self.door_breaking_sound = pygame.mixer.Sound("Assets\\SFX\\door_breaking.flac")
         self.door_breaking_sound.set_volume(0.6)
+        self.present_confetti_sound = pygame.mixer.Sound("Assets\\SFX\confetti.mp3")
 
         self.interactChannel = pygame.mixer.Channel(0)
         self.knockingChannel = pygame.mixer.Channel(1)
         self.horrorTensionChannel = pygame.mixer.Channel(2)
         self.jumpscareChannel = pygame.mixer.Channel(3)
         self.doorbreakingChannel = pygame.mixer.Channel(4)
+        self.presentConfettiChannel = pygame.mixer.Channel(5)
 
         self.floor = pygame.Rect(-50, GROUND_Y, 900, 120)
         self.left_wall = pygame.Rect(-10, -50, 35, 600)
@@ -149,7 +154,7 @@ class Chapter3:
 
 
         self.interactables = [
-            {"name": "present", "rect": self.present, "hint": "[J] Open", "text": present_text, "sound": self.interact_sound, "position": ((self.present.x + 25), (self.present.y - 10))},
+            {"name": "present", "rect": self.present, "hint": "[J] Open", "text": present_text, "sound": self.interact_sound, "position": ((self.present.x + 25), (self.present.y - 25))},
             {"name": "window", "rect": self.window, "hint": "[J] Look outside", "text": window_text, "sound": self.interact_sound, "position": ((self.window.x + 110), (self.window.y - 40))},
             {"name": "tree", "rect": self.christmas_tree, "hint": default_hint, "text": tree_text, "sound": self.interact_sound, "position": ((self.christmas_tree.x + 90), (self.christmas_tree.y - 30))},
             {"name": "bed", "rect": self.bed, "hint": "[J] Sleep", "text": bed_text, "sound": self.interact_sound, "position": ((self.bed.x + 119), (self.bed.y))},
@@ -169,7 +174,7 @@ class Chapter3:
         self.fade_in_alpha = 255
         self.fade_speed = 3
         # self.start_time = pygame.time.get_ticks()
-        self.trigger_delay = 5000 # seconds delay b4 knocking phase
+        self.trigger_delay = 15000 # seconds delay b4 knocking phase
         self.knocking_interval = 3000 # 3 seconds between knocks
         # self.last_knock_time = 0
 
@@ -182,6 +187,7 @@ class Chapter3:
         self.player_target_x = 0
         self.enemy_target_x = 0
         self.move_speed = 2 # Speed of smooth movement during inching
+        self.fall_speed = 5
 
         # self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
         # self.krampus = enemy_krampus.Enemy_Krampus((self.door.centerx + 70), self.door.centery, 0.2, 2)
@@ -199,6 +205,14 @@ class Chapter3:
         self.interactableDialogue = False
         self.isDoorBroken = False
 
+        self.dialogueTimer = pygame.time.get_ticks()
+        self.dialogueStage = 0
+        self.waitTimer = 0
+
+        self.hasOpenedPresent = False
+        self.presentDialogStart = 0
+        self.presentDialogDuration = 3000
+
         pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
         pygame.mixer.music.set_volume(0.18)
 
@@ -215,16 +229,20 @@ class Chapter3:
 
         self.doorParticles = []
         self.isDoorBroken = False
+
         self.starSparkles = []
         self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 14), (self.christmas_tree.top - 25))) ## have to change the pos so that it matches assets ltr
         self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 12), (self.christmas_tree.top - 18)))
         self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx - 11), (self.christmas_tree.top - 1)))
+
         self.snowParticles = []
         for _ in range(200):
             self.snowParticles.append(particles.Snow(800, 600, 2, -4))
         self.endingSnowParticles = []
         for _ in range(120):
             self.endingSnowParticles.append(particles.Snow(800, 600, start_at_top = True))
+
+        self.confettiParticles = []
         
 
     def run(self, events):
@@ -244,6 +262,21 @@ class Chapter3:
 
         if self.state == "FADE_IN":
             if self.fade_in_alpha <= 0:
+                self.state = "DIALOGUE"
+                
+        elif self.state == "DIALOGUE":
+            if self.dialogueStage < len(dialogue_text):
+                self.draw_text(dialogue_text[self.dialogueStage], WHITE, self.player.rect.x + 80, self.player.rect.y - 10)
+
+                if current_time - self.dialogueTimer > 2500:
+                    self.dialogueStage += 1
+                    self.dialogueTimer = current_time
+            else:
+                self.state = "BRIEF_PAUSE"
+                self.wait_timer = current_time
+        
+        elif self.state == "BRIEF_PAUSE":
+            if current_time - self.wait_timer > 500:
                 self.state = "NORMAL"
                 self.start_time = pygame.time.get_ticks() 
 
@@ -251,6 +284,10 @@ class Chapter3:
             if current_time - self.start_time > self.trigger_delay:
                 self.state = "KNOCKING"
                 self.last_knock_time = current_time
+            
+            if self.hasOpenedPresent:
+                if current_time - self.presentDialogStart < self.presentDialogDuration:
+                    self.draw_text(thank_you_dialogue, WHITE, self.player.rect.x + 15, self.player.rect.y - 10)
 
         elif self.state == "KNOCKING":
             if current_time - self.last_knock_time > self.knocking_interval:
@@ -259,6 +296,7 @@ class Chapter3:
                 self.last_knock_time = current_time
             
         elif self.state == "BREAKING":
+            pygame.mixer.music.stop()
             if not self.doorParticles and not self.isDoorBroken:
                 self.isDoorBroken = True
                 for _ in range(50):
@@ -267,6 +305,9 @@ class Chapter3:
 
             self.knockingChannel.stop()
             self.interactChannel.stop()
+
+            if self.player.rect.bottom < GROUND_Y: ## edge case for when you jump and start flying during cutscene
+                self.player.rect.y += self.fall_speed 
             
             if self.black_bar_height < 100:
                 self.black_bar_height += 2
@@ -347,11 +388,8 @@ class Chapter3:
                 self.krampus.draw(self.display)
             self.draw_vfx()
         
-        for particle in self.doorParticles[:]:
-            particle.update()
-            particle.draw(self.display)
-            if particle.life <= 0:
-                self.doorParticles.remove(particle)
+        self.draw_broken_door()
+        self.draw_confetti()
 
         ## self.player.isCutscene = True ## need to set this too true during final jumpscare
         # if not self.player.isCutscene:
@@ -385,25 +423,35 @@ class Chapter3:
                 if event.key == pygame.K_j and current_touching_object:
                     if not self.interactableDialogue:
                         self.interactChannel.play(current_touching_object["sound"])
+
                     self.interactableDialogue = True
                     self.activeInteractable = current_touching_object["rect"]
+
+                    if current_touching_object["name"] == "present" and not self.hasOpenedPresent:
+                        self.hasOpenedPresent = True
+                        self.presentConfettiChannel.play(self.present_confetti_sound)
+                        self.presentDialogStart = pygame.time.get_ticks()
+                        for _ in range(40):
+                            self.confettiParticles.append(particles.Confetti(self.present.centerx, self.present.centery))
+
                     if self.activeInteractable == self.door and self.state == "KNOCKING":
                         self.state = "BREAKING"
                         self.doorbreakingChannel.play(self.door_breaking_sound)
                         self.horrorTensionChannel.play(self.tension_horror_buildup)
                         self.player.isCutscene = True
+                        return
 
         if current_touching_object:
                 if self.interactableDialogue and self.activeInteractable == current_touching_object["rect"]:
                     display_text = current_touching_object["text"]
                 else:
                     display_text = current_touching_object["hint"]
-                    
+                
                 self.draw_text(display_text, WHITE, current_touching_object["position"][0], current_touching_object["position"][1])
 
     def draw_room(self):
         self.display.fill(WARM)
-        self.play_bgm(0, 4000)
+        self.play_bgm(0, 3000)
 
         self.window_glass.blit(self.outside_window, (0, 0))
         self.apply_color_filter(self.window_glass, BLIZZARD_FILTER)
@@ -428,9 +476,7 @@ class Chapter3:
         if self.state in ["BREAKING", "INCHING", "RUSH"]:
             pygame.sprite.Sprite.kill(self.door_prop)
 
-        for sparkle in self.starSparkles:
-            sparkle.update()
-            sparkle.draw(self.display)
+        self.draw_sparkles()
 
     # def object_interactions(self, interactedObject, x, y, interactText, hintText = default_hint):
     #     if self.player.rect.colliderect(interactedObject):
@@ -466,15 +512,25 @@ class Chapter3:
             self.display.blit(s, (0,0))
 
 
-    def draw_text(self, text, color, x, y, large = False):
+    # def draw_text(self, text, color, x, y, large = False):
+    #     font = self.large_font if large else self.font
+    #     text_surface = font.render(text, True, color)
+    #     text_rect = text_surface.get_rect()
+    #     text_rect.midbottom = (x, y)
+    #     self.display.blit(text_surface, text_rect)
+
+    def draw_text(self, text, color, x, y, large=False):
         font = self.large_font if large else self.font
-        text_surface = font.render(text, True, color)
-        text_rect = text_surface.get_rect()
-        text_rect.midbottom = (x, y)
-        self.display.blit(text_surface, text_rect)
+        lines = text.split('\n')
+        line_height = font.get_linesize()
+        for i, line in enumerate(lines):
+            text_surface = font.render(line, True, color)
+            text_rect = text_surface.get_rect()
+            text_rect.midbottom = (x, y + (i * line_height))
+            self.display.blit(text_surface, text_rect)
 
     def play_bgm(self, startTime, fadeIn):
-        if not pygame.mixer.music.get_busy() and self.state in ["NORMAL", "CREDITS"]:
+        if not pygame.mixer.music.get_busy() and self.state in ["BRIEF_PAUSE", "CREDITS"]:
             pygame.mixer.music.play(-1, startTime, fadeIn)
 
     def apply_color_filter(self, surface, color):
@@ -482,7 +538,26 @@ class Chapter3:
         filter.fill(color)
         surface.blit(filter, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
 
+    def draw_broken_door(self):
+        for particle in self.doorParticles[:]:
+            particle.update()
+            particle.draw(self.display)
+            if particle.life <= 0:
+                self.doorParticles.remove(particle)
+    
+    def draw_sparkles(self):
+        for sparkle in self.starSparkles:
+            sparkle.update()
+            sparkle.draw(self.display)
+
     def draw_snow(self, particles):
         for snow in particles:
             snow.update()
             snow.draw(self.display)
+    
+    def draw_confetti(self):
+        for particle in self.confettiParticles[:]:
+            particle.update()
+            particle.draw(self.display)
+            if particle.life <= 0:
+                self.confettiParticles.remove(particle)
