@@ -49,6 +49,10 @@ krampus_spawn_sound = pygame.mixer.Sound(os.path.join("Assets", "SFX", "E_spawn.
 exit_scream = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Exit_scream.mp3"))
 collision_sound = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Collision.mp3"))
 collision_sound.set_volume(0.6)
+rumble_sound = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Rumble.mp3"))
+rumble_sound.set_volume(0.5)
+rumble2_sound = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Rumble_2.mp3"))
+rumble2_sound.set_volume(0.8)
 
 # ---------------- GLOBAL TORCH ----------------
 light_radius = 200
@@ -383,6 +387,9 @@ def scene3():
     global light_radius
 
     player = Player(10, 450, 0.1, 4, 0.5)
+    
+    first_shake_done = False   # for the first shake
+    krampus_shake_done = False # for the Krampus entrance shake
 
     # ---------------- PLATFORMS ----------------
     platforms = [
@@ -445,6 +452,9 @@ def scene3():
                 height,
                 rock_path
             ))
+            
+    # --- Invisible wall setup ---
+    invisible_wall_x = 400 - 10 
 
     # ---------------- GAME LOOP ----------------
     spawn_delay = 2
@@ -465,13 +475,23 @@ def scene3():
 
         player.move(platforms)
         camera_x = max(0, min(player.rect.centerx - WIDTH // 2, platforms[-1].rect.right - WIDTH))
+        
+        # --- Invisible wall logic ---
+        if not krampus_on_ground:  # wall active until Krampus lands
+            if player.rect.right > invisible_wall_x:
+                player.rect.right = invisible_wall_x
 
         # --- Krampus spawn ---
         spawn_timer += dt
         if spawn_timer >= spawn_delay and not krampus_active:
             krampus_active = True
-            shake_timer = 0.8
+            shake_timer = 0.8  # trigger shake
             krampus_spawn_sound.play()
+
+            # Play second rumble sound for Krampus entrance
+            if not krampus_shake_done:
+                pygame.mixer.Channel(6).play(rumble2_sound)
+                krampus_shake_done = True
 
         # --- Krampus movement ---
         if krampus_active:
@@ -481,6 +501,10 @@ def scene3():
                     if krampus.rect.bottom >= p.rect.top:
                         krampus.rect.bottom = p.rect.top
                         krampus_on_ground = True
+
+                        # --- Play scene3 BGM only once when Krampus lands ---
+                        play_bgm("scene3", volume=0.5)
+
             else:
                 if krampus.rect.x < player.rect.x:
                     krampus.rect.x += monster_speed * dt
@@ -488,13 +512,17 @@ def scene3():
                 elif krampus.rect.x > player.rect.x:
                     krampus.rect.x -= monster_speed * dt
                     krampus.facingRight = False
-
+            
         # --- Screen shake ---
         shake_x = shake_y = 0
         if shake_timer > 0:
             shake_timer -= dt
             shake_x = random.randint(-shake_strength, shake_strength)
             shake_y = random.randint(-shake_strength, shake_strength)
+
+            if not first_shake_done:
+                pygame.mixer.Channel(5).play(rumble_sound)  # play first shake rumble
+                first_shake_done = True
 
         # --- Draw background ---
         screen.blit(ice_cave_bg2, (shake_x, shake_y))
@@ -624,7 +652,12 @@ def scene4():
 
         pygame.display.update()
 
+        # ---------------- Scene transition / exit ----------------
         if player.rect.right >= WIDTH:
+
+            # Stop any BGM before exit sounds
+            pygame.mixer.music.stop()
+            current_bgm = None
 
             # play scream
             exit_scream.play()
