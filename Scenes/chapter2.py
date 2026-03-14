@@ -77,7 +77,7 @@ def draw_player_with_light(player):
     # flicker speed increases as light gets smaller
     flicker_speed = 5 + (1 - radius_ratio) * 25
 
-    flicker = (pygame.time.get_ticks() * flicker_speed / 1000) % 8 - 4
+    flicker = random.randint(-5,5)
 
     radius = max(10, light_radius + flicker)
     
@@ -347,18 +347,22 @@ def scene3():
 
     global light_radius
 
-    player = Player(10, 430, 0.1, 4, 0.5)
+    player = Player(10, 450, 0.1, 4, 0.5)
 
     platforms = [
-        Platform(0, 500, WIDTH, 100)
+        Platform(0, 500, 400, 100),    # first section
+        Platform(400, 500, 400, 100),  # second section
+        Platform(800, 500, 400, 100),  # third section
+        Platform(1200, 500, 400, 100),
+        Platform(1600, 500, 400, 100)   # exit section
     ]
 
     krampus = Krampus(player.rect.x, -50, 0.2, 2, 0.5)
 
-    monster_speed = 150
+    monster_speed = 350
 
     # --- Spawn delay ---
-    spawn_delay = 10000000000000000000000000
+    spawn_delay = 2
     spawn_timer = 0
     krampus_active = False
     krampus_on_ground = False
@@ -379,8 +383,16 @@ def scene3():
 
         player.move(platforms)
         
-        if player.rect.left < 0:
-            player.rect.left = 0
+        camera_x = player.rect.centerx - WIDTH // 2
+
+        if camera_x < 0:
+            camera_x = 0
+            
+        level_end = platforms[-1].rect.right
+        max_camera = level_end - WIDTH
+
+        if camera_x > max_camera:
+            camera_x = max_camera
 
         # --- Spawn timer ---
         spawn_timer += dt
@@ -426,16 +438,26 @@ def scene3():
 
         # --- Draw background ---
         screen.blit(ice_cave_bg2, (shake_x, shake_y))
+        
 
         for p in platforms:
-            screen.blit(p.image, (p.rect.x + shake_x, p.rect.y + shake_y))
+            screen.blit(
+                p.image,
+                (p.rect.x - camera_x + shake_x, p.rect.y + shake_y)
+            )          
         
         # --- Player torch ---
+        original_x = player.rect.x
+        player.rect.x = player.rect.x - camera_x
         draw_player_with_light(player)
+        player.rect.x = original_x
 
         # --- Draw Krampus ---
         if krampus_active:
-            krampus.draw(screen)
+            screen.blit(
+                pygame.transform.flip(krampus.img, not krampus.facingRight, False),
+                (krampus.rect.x - camera_x, krampus.rect.y)
+            )
             draw_krampus_danger(player, krampus)
 
         # --- Collision ---
@@ -452,7 +474,9 @@ def scene3():
         pygame.display.update()
 
         # --- Scene transition ---
-        if player.rect.right >= WIDTH:
+        level_end = platforms[-1].rect.right
+
+        if player.rect.right >= level_end:
             scene4()
             return
 
