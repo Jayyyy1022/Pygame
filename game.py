@@ -1,7 +1,7 @@
 import pygame
 import sys
 from Scenes import chapter1
-##from Scenes import chapter2
+from Scenes import chapter2
 from Scenes import chapter3
 from Scenes import game_state_manager as gsm
 
@@ -19,10 +19,10 @@ class Game:
         self.start = Start(self.screen, self.gameStateManager)
         self.level = Level(self.screen, self.gameStateManager)
         self.chapter1 = chapter1.Chapter1(self.screen, self.gameStateManager)
-        ##self.chapter2 = chapter2.run(self.screen, self.gameStateManager)
+        self.chapter2 = chapter2.Chapter2(self.screen, self.gameStateManager)
         self.chapter3 = chapter3.Chapter3(self.screen, self.gameStateManager)
 
-        self.states = {"menu": self.start, "chapter1": self.chapter1, "chapter2": self.level, "chapter3": self.chapter3, 
+        self.states = {"menu": self.start, "chapter1": self.chapter1, "chapter2": self.chapter2, "chapter3": self.chapter3, 
                        "ending": self.level, "level": self.level}
 
     def run(self):

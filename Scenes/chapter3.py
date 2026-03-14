@@ -75,7 +75,7 @@ XMAS_CONFETTI_COLORS = [(210, 34, 21), (34, 139, 34), (255, 215, 0), (255, 255, 
 
 ## Players and entities
 MOVEMENT_SPEED = 3
-PLAYER_X = 60
+PLAYER_X = 80
 PLAYER_SIZE_SCALE = 0.1
 ## player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
 
@@ -89,7 +89,7 @@ window_text = "I can't reach the windowsill..."
 tree_text = "I wonder how they got this tree in."
 bed_text = "I'd rather stay awake for now..."
 door_text = "Maybe later..."
-dialogue_text = ["Oh...", ".. a nightmare..?", "Mom and dad left presents...", "I should check them out."]
+dialogue_text = ["", "Oh...", ".. a nightmare..?", "Mom and dad left presents...", "I should check them out."]
 thank_you_dialogue = "Thanks mom... Thanks dad..."
 
 # room_objects = pygame.sprite.OrderedUpdates(bed, christmas_tree) ## no particular order ## use ordered updates 
@@ -119,7 +119,7 @@ class Chapter3:
         self.tension_horror_buildup.set_volume(0.4)
         self.door_breaking_sound = pygame.mixer.Sound("Assets\\SFX\\door_breaking.flac")
         self.door_breaking_sound.set_volume(0.6)
-        self.present_confetti_sound = pygame.mixer.Sound("Assets\\SFX\confetti.mp3")
+        self.present_confetti_sound = pygame.mixer.Sound("Assets\\SFX\\confetti.mp3")
 
         self.interactChannel = pygame.mixer.Channel(0)
         self.knockingChannel = pygame.mixer.Channel(1)
@@ -137,24 +137,22 @@ class Chapter3:
         self.window = pygame.Rect((LEFT_WALL_X + 210), 240, 220, 200)
         self.christmas_tree = pygame.Rect((RIGHT_WALL_X - 245), (GROUND_Y - 300), 180, 300)
         self.door = pygame.Rect((RIGHT_WALL_X - 15), (GROUND_Y - 175), 15, 175)
-        self.present = pygame.Rect((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50)
+        self.present = pygame.Rect((RIGHT_WALL_X - 265), (GROUND_Y - 50), 100, 50)
 
         self.bed_prop = prop.BackgroundDecoration(self.bed.left - 3, self.bed.top + 2, "Assets\\Objects\\house_bed.png", 238, 112)
         self.window_prop = prop.BackgroundDecoration(self.window.left - 22, self.window.top - 28, "Assets\\Objects\\window_small.png", 264, 240)
         self.christmas_tree_prop = prop.BackgroundDecoration(self.christmas_tree.left, self.christmas_tree.top, "Assets\\Objects\\green_christmas_tree.png", 180, 300)
         self.door_prop = prop.BackgroundDecoration(self.door.left - 15, self.door.top, "Assets\\Objects\\house_door.png", 31, 175)
-        self.present_prop = prop.BackgroundDecoration(self.present.left, self.present.top + 5, "Assets\\Objects\\present_unopened.png", 50, 50)
+        self.present_prop = prop.BackgroundDecoration(self.present.left - 25, self.present.top - 21, "Assets\\Objects\\present_unopened_3.png", 124, 73)
         self.photo_frame_prop = prop.BackgroundDecoration(self.bed.left - 1, self.bed.top - 220, "Assets\\Objects\\house_photo_frame.png", 23, 136)
         self.star_prop = prop.BackgroundDecoration(self.christmas_tree.left + 79, self.christmas_tree.top - 22, "Assets\\Objects\\star.png", 23.5, 24.4)
         
-        
-
         self.window_glass = pygame.Surface((self.window.width, self.window.height)).convert_alpha()
         self.outside_window = pygame.image.load("Assets\\Backgrounds\\snowy_landscape_3.png").convert_alpha()
 
 
         self.interactables = [
-            {"name": "present", "rect": self.present, "hint": "[J] Open", "text": present_text, "sound": self.interact_sound, "position": ((self.present.x + 25), (self.present.y - 25))},
+            {"name": "present", "rect": self.present, "hint": "[J] Open", "text": present_text, "sound": self.interact_sound, "position": ((self.present.x + 25), (self.present.y - 50))},
             {"name": "window", "rect": self.window, "hint": "[J] Look outside", "text": window_text, "sound": self.interact_sound, "position": ((self.window.x + 110), (self.window.y - 40))},
             {"name": "tree", "rect": self.christmas_tree, "hint": default_hint, "text": tree_text, "sound": self.interact_sound, "position": ((self.christmas_tree.x + 90), (self.christmas_tree.y - 30))},
             {"name": "bed", "rect": self.bed, "hint": "[J] Sleep", "text": bed_text, "sound": self.interact_sound, "position": ((self.bed.x + 119), (self.bed.y))},
@@ -172,7 +170,7 @@ class Chapter3:
         #     self.snowParticles.append(particles.Snow(800, 600, 2, -4))
 
         self.fade_in_alpha = 255
-        self.fade_speed = 3
+        self.fade_speed = 1.5
         # self.start_time = pygame.time.get_ticks()
         self.trigger_delay = 15000 # seconds delay b4 knocking phase
         self.knocking_interval = 3000 # 3 seconds between knocks
@@ -196,22 +194,23 @@ class Chapter3:
     def setup_level(self):
         self.state = "FADE_IN"
         self.start_time = pygame.time.get_ticks()
-        self.last_knock_time = 0
         self.inching_count = 0
         self.inching_timer = 0
         self.black_bar_height = 0
         self.red_filter_alpha = 0
         self.activeInteractable = None
         self.interactableDialogue = False
+        
+        self.is_first_knock = True
+        self.last_knock_time = 0
         self.isDoorBroken = False
-
         self.dialogueTimer = pygame.time.get_ticks()
         self.dialogueStage = 0
         self.waitTimer = 0
 
         self.hasOpenedPresent = False
         self.presentDialogStart = 0
-        self.presentDialogDuration = 3000
+        self.presentDialogDuration = 3700
 
         pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
         pygame.mixer.music.set_volume(0.18)
@@ -222,10 +221,10 @@ class Chapter3:
         self.props.add(self.window_prop, self.bed_prop, self.photo_frame_prop, 
                        self.christmas_tree_prop, self.star_prop, self.present_prop, self.door_prop)
         self.platforms = pygame.sprite.Group()
-        self.platforms.add(platform.Platform(-50, GROUND_Y, 900, 120, BROWN_FLOOR))
-        self.platforms.add(platform.Platform(-10, -50, 35, 600, BROWN_FLOOR))
-        self.platforms.add(platform.Platform(775, -50, 35, 600, BROWN_FLOOR))
-        self.platforms.add(platform.Platform(-50, -50, 900, 80, BROWN_FLOOR))
+        self.platforms.add(platform.Platform(-50, GROUND_Y, 900, 120, image_path = "Assets\\Miscellaneous\\wood_flooring.png")) ## floor
+        self.platforms.add(platform.Platform(-10, -50, 35, 600, image_path = "Assets\\Miscellaneous\\room.png")) ## left wall
+        self.platforms.add(platform.Platform(775, -50, 35, 600, image_path = "Assets\\Miscellaneous\\room.png")) ## right wall
+        self.platforms.add(platform.Platform(-50, -50, 900, 80, image_path = "Assets\\Miscellaneous\\wood_flooring.png")) ## ceiling
 
         self.doorParticles = []
         self.isDoorBroken = False
@@ -266,9 +265,9 @@ class Chapter3:
                 
         elif self.state == "DIALOGUE":
             if self.dialogueStage < len(dialogue_text):
-                self.draw_text(dialogue_text[self.dialogueStage], WHITE, self.player.rect.x + 80, self.player.rect.y - 10)
+                self.draw_text(dialogue_text[self.dialogueStage], WHITE, self.player.rect.x + 70, self.player.rect.y - 10)
 
-                if current_time - self.dialogueTimer > 2500:
+                if current_time - self.dialogueTimer > 2100:
                     self.dialogueStage += 1
                     self.dialogueTimer = current_time
             else:
@@ -287,11 +286,14 @@ class Chapter3:
             
             if self.hasOpenedPresent:
                 if current_time - self.presentDialogStart < self.presentDialogDuration:
-                    self.draw_text(thank_you_dialogue, WHITE, self.player.rect.x + 15, self.player.rect.y - 10)
+                    self.draw_text(thank_you_dialogue, WHITE, self.player.rect.x + 15, self.player.rect.y - 30)
 
         elif self.state == "KNOCKING":
-            if current_time - self.last_knock_time > self.knocking_interval:
-                pygame.mixer.music.fadeout(500)
+            pygame.mixer.music.fadeout(500)
+            if self.is_first_knock:
+                self.knockingChannel.play(self.knocking_door)
+                self.is_first_knock = False
+            elif current_time - self.last_knock_time > self.knocking_interval:
                 self.knockingChannel.play(self.knocking_door)
                 self.last_knock_time = current_time
             
