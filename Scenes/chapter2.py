@@ -47,6 +47,8 @@ door_appear_sound = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Door_appea
 jumpscare_sound = pygame.mixer.Sound(os.path.join("Assets", "SFX", "jumpscare.wav"))
 krampus_spawn_sound = pygame.mixer.Sound(os.path.join("Assets", "SFX", "E_spawn.mp3"))
 exit_scream = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Exit_scream.mp3"))
+collision_sound = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Collision.mp3"))
+collision_sound.set_volume(0.6)
 
 # ---------------- GLOBAL TORCH ----------------
 light_radius = 200
@@ -104,14 +106,18 @@ def draw_player_with_light(player):
 
 # ---------------- GAME OVER ----------------
 def game_over():
-
     global light_radius
     global ghost_playing
+    global current_bgm  # optional: reset current bgm tracker
 
     # stop ghost whisper
     ghost_whisper.stop()
     ghost_playing = False
     ghost_whisper.set_volume(0)
+
+    # stop background music
+    pygame.mixer.music.stop()
+    current_bgm = None  # reset so BGM can start fresh next scene
 
     # completely dark screen
     screen.fill((0, 0, 0))
@@ -168,11 +174,37 @@ def draw_krampus_danger(player, krampus):
 
         screen.blit(red_overlay, (0, 0))
 
+# ---------------- GLOBAL BGM ----------------
+bgm_scene1_2_path = os.path.join("Assets", "SFX", "Scene_1n2bgm.mp3")
+bgm_scene3_4_path = os.path.join("Assets", "SFX", "Scene_3n4bgm.mp3")
+current_bgm = None  # keep track of which music is playing
+
+def play_bgm(scene_name, volume=0.5):
+    """Play the correct BGM based on scene. Only switches if needed."""
+    global current_bgm
+
+    # Determine which BGM to play
+    if scene_name in ["scene1", "scene2"]:
+        bgm_to_play = bgm_scene1_2_path
+    elif scene_name in ["scene3", "scene4"]:
+        bgm_to_play = bgm_scene3_4_path
+    else:
+        return  # no music for unknown scenes
+
+    # Only reload/play if different from current
+    if current_bgm != bgm_to_play and os.path.exists(bgm_to_play):
+        pygame.mixer.music.load(bgm_to_play)
+        pygame.mixer.music.set_volume(volume)
+        pygame.mixer.music.play(loops=-1)
+        current_bgm = bgm_to_play
+
 
 # ---------------- SCENE 1 ----------------
 def scene1():
 
     global light_radius
+    
+    play_bgm("scene1")
 
     player = Player(120, -50, 0.1, 4, 0.5) 
         
@@ -259,6 +291,8 @@ def scene1():
 def scene2():
 
     global light_radius
+    
+    play_bgm("scene2")
 
     player = Player(10, 430, 0.1, 4, 0.5)
 
@@ -500,10 +534,13 @@ def scene3():
         # --- Collision with rocks ---
         for rock in falling_rocks:
             if rock.solid and player.rect.colliderect(rock.rect):
+                # Move player out of rock
                 if player.rect.centerx < rock.rect.centerx:
                     player.rect.right = rock.rect.left
                 else:
                     player.rect.left = rock.rect.right
+
+                collision_sound.play()
 
         # --- Collision with ceiling pillars ---
         for pillar in pillars:
@@ -512,6 +549,9 @@ def scene3():
                     player.rect.bottom = pillar.rect.top
                 else:
                     player.rect.top = pillar.rect.bottom
+                    
+                collision_sound.play()
+                    
 
         # --- Torch dimming ---
         if light_radius > 0:
@@ -628,7 +668,7 @@ def scene4():
 
 
 # ---------------- START ----------------
-scene3()
+scene1()
 
 pygame.quit()
 sys.exit()
