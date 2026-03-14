@@ -73,7 +73,7 @@ class Chapter1:
         self.platforms = pygame.sprite.Group()
         self.decorations = pygame.sprite.Group()
         
-        wood_floor_img = os.path.join(self.ROOT_DIR, "Assets", "Miscellaneous", "wood_floor.png")
+        wood_floor_img = os.path.join(self.ROOT_DIR, "Assets", "Miscellaneous", "wood_flooring.png")
         woods_platform_img = os.path.join(self.ROOT_DIR, "Assets", "Miscellaneous", "woods_platform.png")
         rock_img = os.path.join(self.ROOT_DIR, "Assets", "Miscellaneous", "rock.png")
         snow_floor_img = os.path.join(self.ROOT_DIR, "Assets", "Miscellaneous", "snow_floor.png")
