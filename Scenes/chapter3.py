@@ -29,59 +29,10 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 XMAS_CONFETTI_COLORS = [(210, 34, 21), (34, 139, 34), (255, 215, 0), (255, 255, 255)]
 
-## Music
-# pygame.mixer.init()
-# pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
-# pygame.mixer.music.set_volume(0.1) ## bgm
-
-# interact_sound = pygame.mixer.Sound("Assets\\SFX\\interact_sound.mp3")
-# interact_sound.set_volume(0.7)
-
-# knocking_door = pygame.mixer.Sound("Assets\\SFX\\knocking_door.mp3")
-# knocking_door.set_volume(0.7)
-
-# jumpscare_sound = pygame.mixer.Sound("Assets\\SFX\\jumpscare.wav")
-# jumpscare_sound.set_volume(0.4)
-
-# tension_horror_buildup = pygame.mixer.Sound("Assets\\SFX\\horror_tension_buildup.mp3")
-# tension_horror_buildup.set_volume(0.4)
-
-## placeholder props
-# floor = pygame.Rect(-50, GROUND_Y, 900, 120)
-# left_wall = pygame.Rect(-10, -50, 35, 600)
-# right_wall = pygame.Rect(775, -50, 35, 600)
-# ceiling = pygame.Rect(-50, -50, 900, 80)
-
-# bed = pygame.Rect(LEFT_WALL_X, (GROUND_Y - 80), 170, 80)
-# window = pygame.Rect((LEFT_WALL_X + 210), 240, 220, 200)
-# christmas_tree = pygame.Rect((RIGHT_WALL_X - 245), (GROUND_Y - 300), 180, 300)
-# door = pygame.Rect((RIGHT_WALL_X - 15), (GROUND_Y - 175), 15, 175)
-# present = pygame.Rect((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50)
-
-# window_glass = pygame.Surface((window.width, window.height))
-
-# props = pygame.sprite.Group()
-# props.add(platform.Platform((RIGHT_WALL_X - 275), (GROUND_Y - 50), 50, 50, PRESENT_COLOR)) ## present
-# props.add(platform.Platform(LEFT_WALL_X, (GROUND_Y - 80), 170, 80, RED_OBJECT)) ## bed
-# props.add(platform.Platform((LEFT_WALL_X + 210), 240, 220, 200, RED_OBJECT)) ## window
-# props.add(platform.Platform((RIGHT_WALL_X - 245), (GROUND_Y - 300), 180, 300, RED_OBJECT)) ## tree
-# props.add(platform.Platform((RIGHT_WALL_X - 15), (GROUND_Y - 175), 15, 175, RED_OBJECT)) ## door
-
-## platforms and walls
-# platforms = pygame.sprite.Group()
-# platforms.add(platform.Platform(-50, GROUND_Y, 900, 120, BROWN_FLOOR))
-# platforms.add(platform.Platform(-10, -50, 35, 600, BROWN_FLOOR))
-# platforms.add(platform.Platform(775, -50, 35, 600, BROWN_FLOOR))
-
 ## Players and entities
 MOVEMENT_SPEED = 3
 PLAYER_X = 80
 PLAYER_SIZE_SCALE = 0.1
-## player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
-
-## Fonts and Text
-# pygame.font.init()
-# font = pygame.font.SysFont(None, 25)
 
 default_hint = "[J] Interact"
 present_text = "Merry Christmas!\n Love, Mom and Dad"
@@ -92,15 +43,12 @@ door_text = "Maybe later..."
 dialogue_text = ["", "Oh...", ".. a nightmare..?", "Mom and dad left presents...", "I should check them out."]
 thank_you_dialogue = "Thanks mom... Thanks dad..."
 
-# room_objects = pygame.sprite.OrderedUpdates(bed, christmas_tree) ## no particular order ## use ordered updates 
-
 class Chapter3:
     def __init__(self, display, gameStateManager):
         self.display = display
         self.gameStateManager = gameStateManager
         self.isInitialized = False
-        # self.activeInteractable = None
-        # self.interactableDialogue = False
+
         pygame.font.init()
         self.font = pygame.font.SysFont(None, 25)
         self.large_font = pygame.font.SysFont(None, 50)
@@ -108,7 +56,7 @@ class Chapter3:
         pygame.mixer.init()
         pygame.mixer.stop()
         # pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
-        # pygame.mixer.music.set_volume(0.1) ## bgm
+        # pygame.mixer.music.set_volume(0.1) ## moved to setup
         self.interact_sound = pygame.mixer.Sound("Assets\\SFX\\interact_sound.mp3")
         self.interact_sound.set_volume(0.65)
         self.knocking_door = pygame.mixer.Sound("Assets\\SFX\\knocking_door.mp3")
@@ -159,40 +107,19 @@ class Chapter3:
             {"name": "door", "rect": self.door, "hint": "[J] Open", "text": door_text, "sound": self.interact_sound, "position": ((self.door.x - 25), (self.door.y - 10))}
         ]
 
-        # self.doorParticles = []
-        # self.isDoorBroken = False
-        # self.starSparkles = []
-        # self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 4), (self.christmas_tree.top - 8))) ## have to change the pos so that it matches assets ltr
-        # self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx + 7), (self.christmas_tree.top - 4)))
-        # self.starSparkles.append(particles.Sparkle((self.christmas_tree.centerx - 6), (self.christmas_tree.top - 1)))
-        # self.snowParticles = []
-        # for _ in range(200):
-        #     self.snowParticles.append(particles.Snow(800, 600, 2, -4))
-
         self.fade_in_alpha = 255
         self.fade_speed = 1.5
-        # self.start_time = pygame.time.get_ticks()
         self.trigger_delay = 15000 # seconds delay b4 knocking phase
         self.knocking_interval = 3000 # 3 seconds between knocks
-        # self.last_knock_time = 0
-
-        # self.state = "NORMAL" # cutscene states, NORMAL, KNOCKING, BREAKING, INCHING, RUSH, BLACKOUT, CREDITS 
-        # self.inching_count = 0
-        # self.inching_timer = 0
-        # self.black_bar_height = 0
-        # self.red_filter_alpha = 0
         
         self.player_target_x = 0
         self.enemy_target_x = 0
         self.move_speed = 2 # Speed of smooth movement during inching
         self.fall_speed = 5
-
-        # self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 60), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
-        # self.krampus = enemy_krampus.Enemy_Krampus((self.door.centerx + 70), self.door.centery, 0.2, 2)
         
 
     def setup_level(self):
-        self.state = "FADE_IN"
+        self.state = "FADE_IN" ## game states for cutscene, FADE_IN, DIALOGUE, BRIEF_PAUSE, NORMAL, KNOCKING, BREAKING, INCHING, RUSH, BLACKOUT, CREDITS 
         self.start_time = pygame.time.get_ticks()
         self.inching_count = 0
         self.inching_timer = 0
@@ -222,9 +149,9 @@ class Chapter3:
                        self.christmas_tree_prop, self.star_prop, self.present_prop, self.door_prop)
         self.platforms = pygame.sprite.Group()
         self.platforms.add(platform.Platform(-50, GROUND_Y, 900, 120, image_path = "Assets\\Miscellaneous\\wood_flooring.png")) ## floor
-        self.platforms.add(platform.Platform(-10, -50, 35, 600, image_path = "Assets\\Miscellaneous\\room.png")) ## left wall
-        self.platforms.add(platform.Platform(775, -50, 35, 600, image_path = "Assets\\Miscellaneous\\room.png")) ## right wall
-        self.platforms.add(platform.Platform(-50, -50, 900, 80, image_path = "Assets\\Miscellaneous\\wood_flooring.png")) ## ceiling
+        self.platforms.add(platform.Platform(-10, -50, 35, 600, image_path = "Assets\\Miscellaneous\\room.png"))                ## left wall
+        self.platforms.add(platform.Platform(775, -50, 35, 600, image_path = "Assets\\Miscellaneous\\room.png"))                ## right wall
+        self.platforms.add(platform.Platform(-50, -50, 900, 80, image_path = "Assets\\Miscellaneous\\wood_flooring.png"))       ## ceiling
 
         self.doorParticles = []
         self.isDoorBroken = False
@@ -393,19 +320,7 @@ class Chapter3:
         self.draw_broken_door()
         self.draw_confetti()
 
-        ## self.player.isCutscene = True ## need to set this too true during final jumpscare
-        # if not self.player.isCutscene:
-        #     self.handle_interactions(events)
-        #     for event in events:
-        #         if event.type == pygame.KEYDOWN:
-        #             if event.key == pygame.K_f:
-        #                 self.gameStateManager.set_state("level")
-        #                 pygame.mixer.music.fadeout(1000)
-            
-        # self.player.draw(self.display)
-        # self.player.move(self.platforms)
-
-
+    ## handles player-object interactions
     def handle_interactions(self, events):
         current_touching_object = None
         for obj in self.interactables:
@@ -466,60 +381,35 @@ class Chapter3:
 
         self.props.draw(self.display)
         self.platforms.draw(self.display)
-        # self.draw_props_rect(BROWN_FLOOR, self.ceiling)
-        # self.draw_props_rect(RED_OBJECT, self.bed)
-        # # self.draw_props_rect(RED_OBJECT, window)
-        # self.draw_props_rect(RED_OBJECT, self.christmas_tree)
-        # self.draw_props_rect(PRESENT_COLOR, self.present)
-        
-        # if self.state not in ["BREAKING", "INCHING", "RUSH"]:
-        #     self.draw_props_rect(RED_OBJECT, self.door)
 
         if self.state in ["BREAKING", "INCHING", "RUSH"]:
             pygame.sprite.Sprite.kill(self.door_prop)
 
         self.draw_sparkles()
 
-    # def object_interactions(self, interactedObject, x, y, interactText, hintText = default_hint):
-    #     if self.player.rect.colliderect(interactedObject):
-    #         if self.interactableDialogue:
-    #             self.draw_text(interactText, WHITE, x, y)
-    #         else:
-    #             self.draw_text(hintText, WHITE, x, y)
-    #     else:
-    #         self.interactableDialogue = False
-
 
     def draw_props_rect(self, color, dimensions):
         pygame.draw.rect(self.display, color, dimensions)
 
     def draw_vfx(self):
-        # Black bars
+        ## -- Black bars --
         if self.black_bar_height > 0:
             pygame.draw.rect(self.display, BLACK, (0, 0, 800, self.black_bar_height))
             pygame.draw.rect(self.display, BLACK, (0, 600 - self.black_bar_height, 800, self.black_bar_height))
         
-        # Red filter
+        ## -- Red filter --
         if self.red_filter_alpha > 0:
             s = pygame.Surface((800, 600))
             s.set_alpha(self.red_filter_alpha)
             s.fill("RED")
             self.display.blit(s, (0,0))
 
-        # White fade in
+        ## -- White fade in --
         if self.fade_in_alpha > 0:
             s = pygame.Surface((800, 600))
             s.set_alpha(self.fade_in_alpha)
             s.fill(WHITE)
             self.display.blit(s, (0,0))
-
-
-    # def draw_text(self, text, color, x, y, large = False):
-    #     font = self.large_font if large else self.font
-    #     text_surface = font.render(text, True, color)
-    #     text_rect = text_surface.get_rect()
-    #     text_rect.midbottom = (x, y)
-    #     self.display.blit(text_surface, text_rect)
 
     def draw_text(self, text, color, x, y, large=False):
         font = self.large_font if large else self.font
@@ -531,14 +421,17 @@ class Chapter3:
             text_rect.midbottom = (x, y + (i * line_height))
             self.display.blit(text_surface, text_rect)
 
+
     def play_bgm(self, startTime, fadeIn):
         if not pygame.mixer.music.get_busy() and self.state in ["BRIEF_PAUSE", "CREDITS"]:
             pygame.mixer.music.play(-1, startTime, fadeIn)
+
 
     def apply_color_filter(self, surface, color):
         filter = pygame.Surface(surface.get_size()).convert_alpha()
         filter.fill(color)
         surface.blit(filter, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
+
 
     def draw_broken_door(self):
         for particle in self.doorParticles[:]:
@@ -546,6 +439,7 @@ class Chapter3:
             particle.draw(self.display)
             if particle.life <= 0:
                 self.doorParticles.remove(particle)
+    
     
     def draw_sparkles(self):
         for sparkle in self.starSparkles:
