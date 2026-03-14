@@ -36,6 +36,7 @@ key_image = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Key.png")
 key_image = pygame.transform.scale(key_image, (30, 30))
 door_image = pygame.image.load(os.path.join("Assets", "Miscellaneous", "Cave_door.png")).convert_alpha()
 door_image = pygame.transform.scale(door_image, (50, 80))  # match the rectangle size
+rock_path = os.path.join("Assets", "Miscellaneous", "rock.png")  # Add this line
 
 fall_sound = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Fall_down.mp3"))
 ghost_whisper = pygame.mixer.Sound(os.path.join("Assets", "SFX", "Ghost_whisper.mp3"))
@@ -356,6 +357,13 @@ def scene3():
         Platform(1200, 500, 400, 100),
         Platform(1600, 500, 400, 100)   # exit section
     ]
+    
+    obstacles = [
+        Platform(350, 460, 40, 40, image_path=rock_path),
+        Platform(750, 460, 40, 40, image_path=rock_path),
+        Platform(1100, 460, 40, 40, image_path=rock_path),
+        Platform(1450, 460, 40, 40, image_path=rock_path)
+    ]
 
     krampus = Krampus(player.rect.x, -50, 0.2, 2, 0.5)
 
@@ -444,7 +452,11 @@ def scene3():
             screen.blit(
                 p.image,
                 (p.rect.x - camera_x + shake_x, p.rect.y + shake_y)
-            )          
+            )         
+            
+        # Draw obstacles
+        for obs in obstacles:
+            screen.blit(obs.image, (obs.rect.x - camera_x + shake_x, obs.rect.y + shake_y)) 
         
         # --- Player torch ---
         original_x = player.rect.x
@@ -464,6 +476,15 @@ def scene3():
         if krampus_active and player.rect.colliderect(krampus.rect):
             game_over()
             return
+        
+        # --- Player collision with obstacles ---
+        for obs in obstacles:
+            if player.rect.colliderect(obs.rect):
+                # simple push back
+                if player.rect.centerx < obs.rect.centerx:
+                    player.rect.right = obs.rect.left
+                else:
+                    player.rect.left = obs.rect.right
 
         # --- Torch dim ---
         if light_radius > 0:
