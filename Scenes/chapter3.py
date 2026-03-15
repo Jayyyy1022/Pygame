@@ -78,6 +78,8 @@ class Chapter3:
         self.doorbreakingChannel = pygame.mixer.Channel(4)
         self.presentConfettiChannel = pygame.mixer.Channel(5)
 
+        self.room_background = pygame.transform.scale(pygame.image.load("Assets\\Backgrounds\\room_wall_8.png").convert_alpha(), (800, 600))
+
         self.floor = pygame.Rect(-50, GROUND_Y, 900, 120)
         self.left_wall = pygame.Rect(-10, -50, 35, 600)
         self.right_wall = pygame.Rect(775, -50, 35, 600)
@@ -377,6 +379,7 @@ class Chapter3:
 
     def draw_room(self):
         self.display.fill(WARM)
+        self.display.blit(self.room_background, (0, 0))
         self.play_bgm(0, 3000)
 
         self.window_glass.blit(self.outside_window, (0, 0))
