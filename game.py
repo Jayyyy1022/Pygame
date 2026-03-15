@@ -41,33 +41,6 @@ class Game:
             pygame.display.flip()
             self.clock.tick(FPS)
 
-## =-=-=-=-=-= MAIN MENU =-=-=-=-=-=-=-=
-class Start:
-    def __init__(self, display, gameStateManager):
-        self.display = display
-        self.gameStateManager = gameStateManager
-    
-    def run(self, event):
-        self.display.fill("red")
-        draw_text(self.display, "[a] chapter 1", (255,255,255), 400, 250)
-        draw_text(self.display, "[b] chapter 2", (255,255,255), 400, 275)
-        draw_text(self.display, "[c] chapter 3", (255,255,255), 400, 300)
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_a]:
-            self.gameStateManager.set_state("chapter1")
-        if keys[pygame.K_b]:
-            self.gameStateManager.set_state("chapter2")
-        if keys[pygame.K_c]:
-            self.gameStateManager.set_state("chapter3")
-
-def draw_text(display, text, color, x, y):
-        font = pygame.font.SysFont(None, 30)
-        text_surface = font.render(text, True, color)
-        text_rect = text_surface.get_rect()
-        text_rect.midbottom = (x, y)
-        display.blit(text_surface, text_rect)
-
 
 if __name__ == "__main__":
     game = Game()
