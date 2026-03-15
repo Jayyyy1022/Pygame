@@ -364,7 +364,7 @@ class Chapter1:
                     self.intro_state = 0     
 
         if self.chase_started and self.chase_text_timer > 0:
-            self.draw_floating_text("Hold LEFT SHIFT to RUN!")
+            self.draw_floating_text("Hold LEFT SHIFT or K to RUN!")
             self.chase_text_timer -= 1
             
         if self.camera_scroll > 2800 and self.player.rect.y < 600:
