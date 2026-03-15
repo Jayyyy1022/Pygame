@@ -17,7 +17,6 @@ class Game:
         self.clock = pygame.time.Clock()
 
         self.gameStateManager = gsm.GameStateManager("menu")
-        self.start = Start(self.screen, self.gameStateManager)
         self.chapter1 = chapter1.Chapter1(self.screen, self.gameStateManager)
         self.chapter2 = chapter2.Chapter2(self.screen, self.gameStateManager)
         self.chapter3 = chapter3.Chapter3(self.screen, self.gameStateManager)
