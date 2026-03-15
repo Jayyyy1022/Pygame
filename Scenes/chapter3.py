@@ -78,6 +78,8 @@ class Chapter3:
         self.doorbreakingChannel = pygame.mixer.Channel(4)
         self.presentConfettiChannel = pygame.mixer.Channel(5)
 
+        self.room_background = pygame.transform.scale(pygame.image.load("Assets\\Backgrounds\\room_wall_8.png").convert_alpha(), (800, 600))
+
         self.floor = pygame.Rect(-50, GROUND_Y, 900, 120)
         self.left_wall = pygame.Rect(-10, -50, 35, 600)
         self.right_wall = pygame.Rect(775, -50, 35, 600)
@@ -128,7 +130,8 @@ class Chapter3:
         self.start_time = pygame.time.get_ticks()
         self.inching_count = 0
         self.inching_timer = 0
-        self.black_bar_height = 0
+        self.black_bar_height_top = 0
+        self.black_bar_height_bottom = 0
         self.red_filter_alpha = 0
         self.activeInteractable = None
         self.interactableDialogue = False
@@ -244,9 +247,13 @@ class Chapter3:
 
             if self.player.rect.bottom < GROUND_Y: ## edge case for when you jump and start flying during cutscene
                 self.player.rect.y += self.fall_speed 
+                self.player.update_action(3)
             
-            if self.black_bar_height < 100:
-                self.black_bar_height += 2
+            if self.black_bar_height_top < 260:
+                self.black_bar_height_top += 4
+            if self.black_bar_height_bottom < 65:
+                self.black_bar_height_bottom += 1
+
             if self.red_filter_alpha < 100:
                 self.red_filter_alpha += 2
             
@@ -257,6 +264,11 @@ class Chapter3:
             
             if self.player.rect.x > self.player_target_x:
                 self.player.rect.x -= 2
+                if self.player.rect.bottom >= GROUND_Y:
+                    self.player.update_action(1)
+            else:
+                if self.player.rect.bottom >= GROUND_Y:
+                    self.player.update_action(0)
 
             if current_time - self.inching_timer > 1500:
                 self.state = "INCHING"
@@ -271,6 +283,10 @@ class Chapter3:
         elif self.state == "INCHING":
             if self.player.rect.x > self.player_target_x:
                 self.player.rect.x -= self.move_speed
+                self.player.update_action(1)
+            else:
+                self.player.update_action(0)
+            
             if self.krampus.rect.x > self.enemy_target_x:
                 self.krampus.rect.x -= self.move_speed + 1 ## krampus will be slightly faster
 
@@ -287,8 +303,10 @@ class Chapter3:
 
         elif self.state == "RUSH":
             self.horrorTensionChannel.fadeout(1000)
-            self.player.rect.x -= 2
-            self.krampus.rect.x -= 15
+            self.player.rect.x -= 5
+            self.player.facingRight = False
+            self.player.update_action(2)
+            self.krampus.rect.x -= 17
             if self.krampus.rect.colliderect(self.player.rect):
                 self.state = "BLACKOUT"
                 self.jumpscareChannel.play(self.jumpscare_sound)
@@ -377,6 +395,7 @@ class Chapter3:
 
     def draw_room(self):
         self.display.fill(WARM)
+        self.display.blit(self.room_background, (0, 0))
         self.play_bgm(0, 3000)
 
         self.window_glass.blit(self.outside_window, (0, 0))
@@ -402,9 +421,9 @@ class Chapter3:
 
     def draw_vfx(self):
         ## -- Black bars --
-        if self.black_bar_height > 0:
-            pygame.draw.rect(self.display, BLACK, (0, 0, 800, self.black_bar_height))
-            pygame.draw.rect(self.display, BLACK, (0, 600 - self.black_bar_height, 800, self.black_bar_height))
+        if self.black_bar_height_top > 0 or self.black_bar_height_bottom > 0:
+            pygame.draw.rect(self.display, BLACK, (0, 0, 800, self.black_bar_height_top))
+            pygame.draw.rect(self.display, BLACK, (0, 600 - self.black_bar_height_bottom, 800, self.black_bar_height_bottom))
         
         ## -- Red filter --
         if self.red_filter_alpha > 0:

@@ -4,9 +4,6 @@ class Player_Child(pygame.sprite.Sprite):
 
     def __init__(self, x, y, scale, speed = 3, gravity = 0.75):
         super().__init__()
-        
-        # img = pygame.image.load("Assets\\Player\\player_idle.png").convert_alpha()
-        # self.image = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
         self.baseSpeed = speed  
         self.speedMultiplier = 1
         self.direction = 0              ## Movement direction | Left = -1 | Idle = 0 | Right = 1 |
@@ -38,8 +35,6 @@ class Player_Child(pygame.sprite.Sprite):
                 f"Assets\\Player\\Walk\\Walk ({i+1}).png", 
                 scale
             )
-            # img_frame = self.crop_image(pygame.image.load(f"Assets\\Player\\Walk\\Walk ({i+1}).png").convert_alpha())
-            # img_frame = pygame.transform.scale(img_frame, (int(img_frame.get_width() * scale), int(img_frame.get_height() * scale)))
             self.walkingFrames.append(img_frame)
         self.animationList.append(self.walkingFrames)
 
@@ -50,8 +45,6 @@ class Player_Child(pygame.sprite.Sprite):
                 scale,
                 crop_right = 258
             )            
-            # img_frame = self.crop_image(pygame.image.load(f"Assets\\Player\\Run\\Run ({i+1}).png").convert_alpha())
-            # img_frame = pygame.transform.scale(img_frame, (int(img_frame.get_width() * scale), int(img_frame.get_height() * scale)))
             self.runningFrames.append(img_frame)
         self.animationList.append(self.runningFrames)
         
@@ -63,8 +56,6 @@ class Player_Child(pygame.sprite.Sprite):
                 crop_bottom = 82, 
                 crop_right = 250
             )            
-            # img_frame = self.crop_image(pygame.image.load(f"Assets\\Player\\Jump\\Jump ({i+1}).png").convert_alpha())
-            # img_frame = pygame.transform.scale(img_frame, (int(img_frame.get_width() * scale), int(img_frame.get_height() * scale)))
             self.jumpingFrames.append(img_frame)
         self.animationList.append(self.jumpingFrames)
 
@@ -161,8 +152,6 @@ class Player_Child(pygame.sprite.Sprite):
             self.update_action(1)       ## walk
 
 
-        
-
     def update_animation(self):
         ANIMATION_COOLDOWN = 50
 
@@ -182,31 +171,18 @@ class Player_Child(pygame.sprite.Sprite):
             self.frameIndex = 0 
             self.updateTime = pygame.time.get_ticks()
 
+
     def draw(self, screen):
         screen.blit(pygame.transform.flip(self.image, not self.facingRight, False), self.rect)
+
 
     def load_and_crop_image(self, path, scale, crop_top = 20, crop_bottom = 58, crop_left = 11, crop_right = 311):
         img = pygame.image.load(path).convert_alpha()
         
-        # Calculate new dimensions
         new_width = img.get_width() - crop_left - crop_right
         new_height = img.get_height() - crop_top - crop_bottom
         
-        # Create the crop area (x, y, width, height)
         crop_rect = pygame.Rect(crop_left, crop_top, new_width, new_height)
-        
-        # Crop the image
+    
         img = img.subsurface(crop_rect)
-        
-        # Scale and return
         return pygame.transform.scale(img, (int(new_width * scale), int(new_height * scale)))
-
-    def crop_image(self, old_image, crop_top = 30, crop_bottom = 39, crop_left = 200, crop_right = 14):
-        new_width = old_image.get_width() - crop_left - crop_right
-        new_height = old_image.get_height() - crop_top - crop_bottom
-        crop_rect = pygame.Rect(crop_left, crop_top, new_width, new_height)
-
-
-        # target_width = old_image.get_width() - 100
-        # crop_rect = pygame.Rect(0, 0, target_width, old_image.get_height())
-        return old_image.subsurface(crop_rect)
