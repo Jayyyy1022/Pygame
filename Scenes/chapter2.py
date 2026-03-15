@@ -143,7 +143,7 @@ class Chapter2:
             self.krampus = Krampus(0, 430, 0.2, 2, 0.5)
             self.krampus_active = False         # spawn after delay 
             self.krampus_timer = 0              # timer to track delay
-            self.krampus_speed = 323            # pixels per second
+            self.krampus_speed = 280            # pixels per second
             self.krampus_spawn_delay = 1             # 1 second delay
 
     def play_bgm(self, scene_name, volume=0.5):
