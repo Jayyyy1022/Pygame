@@ -20,7 +20,6 @@ class Chapter2:
         self.font = pygame.font.SysFont(None, 30)
         
         # ---------------- SETTINGS & STATE ----------------
-        self.light_radius = 200
         self.dim_speed = 2
         self.isInitialized = False
         self.current_scene = "scene1"
@@ -75,6 +74,7 @@ class Chapter2:
 
         if scene_name == "scene1":
             self.play_bgm("scene1")
+            self.light_radius = 200
             self.player = Player(120, -50, 0.1, 4, 0.5)
             self.platforms = [Platform(0, 500, self.WIDTH, 100)]
             self.sign_rect = pygame.Rect(380, 440, 40, 60)
@@ -241,10 +241,11 @@ class Chapter2:
         elif self.current_scene == "scene4": self.update_scene4(dt)
 
         # Torch Dimming
-        if self.light_radius > 0:
-            self.light_radius -= self.dim_speed * dt
-        else:
-            self.game_over()
+        if self.player_landed:
+            if self.light_radius > 0:
+                self.light_radius -= self.dim_speed * dt
+            else:
+                self.game_over()
         self.draw_ui_esc(events)
 
     def update_scene1(self, dt):
