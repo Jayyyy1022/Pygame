@@ -18,6 +18,7 @@ class Chapter2:
         self.WIDTH, self.HEIGHT = 800, 600
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 30)
+        self.PLAYER_SCALE = 0.172
         
         # ---------------- SETTINGS & STATE ----------------
         self.dim_speed = 2
@@ -75,7 +76,7 @@ class Chapter2:
         if scene_name == "scene1":
             self.play_bgm("scene1")
             self.light_radius = 200
-            self.player = Player(120, -50, 0.1, 4, 0.5)
+            self.player = Player(120, -50, self.PLAYER_SCALE, 4, 0.5)
             self.platforms = [Platform(0, 500, self.WIDTH, 100)]
             self.sign_rect = pygame.Rect(380, 440, 40, 60)
             self.show_sign_dialogue = False
@@ -85,7 +86,7 @@ class Chapter2:
 
         elif scene_name == "scene2":
             self.play_bgm("scene2")
-            self.player = Player(10, 430, 0.1, 4, 0.5)
+            self.player = Player(10, 430, self.PLAYER_SCALE, 4, 0.5)
             self.platforms = [
                 Platform(0, 500, 150, 50),      # starting platform(bottom left)
                 Platform(650, 250, 150, 50),    # top right
@@ -101,7 +102,7 @@ class Chapter2:
             self.door_visible = False
 
         elif scene_name == "scene3":
-            self.player = Player(10, 450, 0.1, 4, 0.5)
+            self.player = Player(10, 450, self.PLAYER_SCALE, 4, 0.5)
             self.krampus = Krampus(self.player.rect.x, -50, 0.2, 2, 0.5)
             self.monster_speed = 465
             self.platforms = [
@@ -137,7 +138,7 @@ class Chapter2:
 
         elif scene_name == "scene4":
             self.play_bgm("scene4")
-            self.player = Player(10, 430, 0.1, 2, 0.5)
+            self.player = Player(10, 430, self.PLAYER_SCALE, 2, 0.5)
             self.platforms = [Platform(0, 500, self.WIDTH, 100)]
             self.krampus = Krampus(0, 430, 0.2, 2, 0.5)
             self.krampus_active = False         # spawn after delay 
@@ -247,6 +248,7 @@ class Chapter2:
             else:
                 self.game_over()
         self.draw_ui_esc(events)
+        self.player.update_animation()
 
     def update_scene1(self, dt):
         self.player.move(self.platforms)

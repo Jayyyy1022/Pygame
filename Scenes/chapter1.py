@@ -64,8 +64,8 @@ class Chapter1:
             pass
 
         ## --- 2. Initialize Entities ---
-        self.player = Player.Player_Child(100, 450, 0.1, self.MOVEMENT_SPEED, self.GRAVITY)
-        self.enemy = Enemy.Enemy_Krampus(-600, 400, 0.15, self.MOVEMENT_SPEED * 1.1, self.GRAVITY)
+        self.player = Player.Player_Child(100, 450, 0.172, self.MOVEMENT_SPEED, self.GRAVITY)
+        self.enemy = Enemy.Enemy_Krampus(-600, 400, 0.2, self.MOVEMENT_SPEED * 1.1, self.GRAVITY)
         self.enemies_group = pygame.sprite.Group()
         self.enemies_group.add(self.enemy)
 
@@ -201,6 +201,7 @@ class Chapter1:
 
         ## Update player physics
         self.player.move(self.platforms)
+        self.player.update_animation()
 
         ## --- Invisible Barriers ---
         if self.player.rect.left < 0:

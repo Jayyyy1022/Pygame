@@ -1,5 +1,4 @@
 import pygame
-import sys
 import random
 
 from Entities.Obstacle import platform
@@ -30,8 +29,9 @@ XMAS_CONFETTI_COLORS = [(210, 34, 21), (34, 139, 34), (255, 215, 0), (255, 255, 
 
 ## Players and entities
 MOVEMENT_SPEED = 3
-PLAYER_X = 80
-PLAYER_SIZE_SCALE = 0.1
+PLAYER_X = 85
+PLAYER_SIZE_SCALE = 0.172
+ENEMY_SIZE_SCALE = 0.2
 
 default_hint = "[J] Interact"
 present_text = "Merry Christmas!\n Love, Mom and Dad"
@@ -39,6 +39,7 @@ window_text = "I can't reach the windowsill..."
 tree_text = "I wonder how they got this tree in."
 bed_text = "I'd rather stay awake for now..."
 door_text = "Maybe later..."
+teddy_text = "Hi teddy."
 dialogue_text = ["", "Oh...", ".. a nightmare..?", "Mom and dad left presents...", "I should check them out."]
 thank_you_dialogue = "Thanks mom... Thanks dad..."
 
@@ -67,6 +68,8 @@ class Chapter3:
         self.door_breaking_sound = pygame.mixer.Sound("Assets\\SFX\\door_breaking.flac")
         self.door_breaking_sound.set_volume(0.6)
         self.present_confetti_sound = pygame.mixer.Sound("Assets\\SFX\\confetti.mp3")
+        self.teddy_squeak_sound = pygame.mixer.Sound("Assets\\SFX\\teddy_squeak.mp3")
+        self.teddy_squeak_sound.set_volume(0.6)
 
         self.interactChannel = pygame.mixer.Channel(0)
         self.knockingChannel = pygame.mixer.Channel(1)
@@ -85,6 +88,7 @@ class Chapter3:
         self.christmas_tree = pygame.Rect((RIGHT_WALL_X - 245), (GROUND_Y - 300), 180, 300)
         self.door = pygame.Rect((RIGHT_WALL_X - 15), (GROUND_Y - 175), 15, 175)
         self.present = pygame.Rect((RIGHT_WALL_X - 265), (GROUND_Y - 50), 100, 50)
+        self.teddy = pygame.Rect((self.bed.right - 7), (GROUND_Y - 40), 40, 40)
 
         self.bed_prop = prop.BackgroundDecoration(self.bed.left - 3, self.bed.top + 2, "Assets\\Objects\\house_bed.png", 238, 112)
         self.window_prop = prop.BackgroundDecoration(self.window.left - 22, self.window.top - 28, "Assets\\Objects\\window_small.png", 264, 240)
@@ -93,6 +97,8 @@ class Chapter3:
         self.present_prop = prop.BackgroundDecoration(self.present.left - 25, self.present.top - 21, "Assets\\Objects\\present_unopened_3.png", 124, 73)
         self.photo_frame_prop = prop.BackgroundDecoration(self.bed.left - 1, self.bed.top - 220, "Assets\\Objects\\house_photo_frame.png", 23, 136)
         self.star_prop = prop.BackgroundDecoration(self.christmas_tree.left + 79, self.christmas_tree.top - 22, "Assets\\Objects\\star.png", 23.5, 24.4)
+        self.teddy_prop = prop.BackgroundDecoration(self.bed.right - 14, GROUND_Y - 40, "Assets\\Objects\\teddy_bed.png", 39.3, 40)
+        self.car_prop = prop.BackgroundDecoration(self.christmas_tree.centerx + 16, GROUND_Y - 30, "Assets\\Objects\\toy_car.png", 60, 30)
         
         self.window_glass = pygame.Surface((self.window.width, self.window.height)).convert_alpha()
         self.outside_window = pygame.image.load("Assets\\Backgrounds\\snowy_landscape_3.png").convert_alpha()
@@ -103,7 +109,8 @@ class Chapter3:
             {"name": "window", "rect": self.window, "hint": "[J] Look outside", "text": window_text, "sound": self.interact_sound, "position": ((self.window.x + 110), (self.window.y - 40))},
             {"name": "tree", "rect": self.christmas_tree, "hint": default_hint, "text": tree_text, "sound": self.interact_sound, "position": ((self.christmas_tree.x + 90), (self.christmas_tree.y - 30))},
             {"name": "bed", "rect": self.bed, "hint": "[J] Sleep", "text": bed_text, "sound": self.interact_sound, "position": ((self.bed.x + 119), (self.bed.y))},
-            {"name": "door", "rect": self.door, "hint": "[J] Open", "text": door_text, "sound": self.interact_sound, "position": ((self.door.x - 25), (self.door.y - 10))}
+            {"name": "door", "rect": self.door, "hint": "[J] Open", "text": door_text, "sound": self.interact_sound, "position": ((self.door.x - 25), (self.door.y - 10))},
+            {"name": "teddy", "rect": self.teddy, "hint": "[J] Play", "text": teddy_text, "sound": self.teddy_squeak_sound, "position": ((self.teddy.x - 15), (self.teddy.y - 10))}
         ]
 
         self.fade_speed = 1.5
@@ -141,11 +148,12 @@ class Chapter3:
         pygame.mixer.music.load("Assets\\SFX\\christmas_piano.wav")
         pygame.mixer.music.set_volume(0.18)
 
-        self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 50), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
-        self.krampus = enemy_krampus.Enemy_Krampus((self.door.centerx + 70), self.door.centery, 0.2, 2)
+        self.player = player_child.Player_Child(PLAYER_X, (GROUND_Y - 42), PLAYER_SIZE_SCALE, MOVEMENT_SPEED, GRAVITY)
+        self.krampus = enemy_krampus.Enemy_Krampus((self.door.centerx + 70), self.door.centery, ENEMY_SIZE_SCALE, 2)
         self.props = pygame.sprite.OrderedUpdates()
         self.props.add(self.window_prop, self.bed_prop, self.photo_frame_prop, 
-                       self.christmas_tree_prop, self.star_prop, self.present_prop, self.door_prop)
+                       self.christmas_tree_prop, self.star_prop, self.present_prop, self.door_prop,
+                       self.teddy_prop, self.car_prop)
         self.platforms = pygame.sprite.Group()
         self.platforms.add(platform.Platform(-50, GROUND_Y, 900, 120, image_path = "Assets\\Miscellaneous\\wood_flooring.png")) ## floor
         self.platforms.add(platform.Platform(-10, -50, 35, 600, image_path = "Assets\\Miscellaneous\\room.png"))                ## left wall
@@ -319,6 +327,7 @@ class Chapter3:
         
         self.draw_broken_door()
         self.draw_confetti()
+        self.player.update_animation()
 
     ## handles player-object interactions
     def handle_interactions(self, events):

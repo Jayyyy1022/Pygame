@@ -26,7 +26,6 @@ class MainMenu:
         # Parallax Layers
         self.layers = []
         try:
-            # Assuming layers are in Assets/Backgrounds/
             base_path = "Assets\\Menu\\"
             layer_names = [
                 "snowy_landscape_layer_4.png", # Furthest
@@ -36,10 +35,8 @@ class MainMenu:
             ]
             for name in layer_names:
                 img = pygame.image.load(base_path + name).convert_alpha()
-                # Scale to fit window height or similar
                 self.layers.append(img)
         except pygame.error:
-            # Fallback if images missing
             for i in range(4):
                 surf = pygame.Surface((400, 600))
                 surf.fill((20, 20, 40 + i*20))
@@ -69,7 +66,7 @@ class MainMenu:
         pygame.mixer.music.stop()
 
         pygame.mixer.music.load("Assets\\SFX\\Silksong.mp3")
-        pygame.mixer.music.set_volume(0.18)
+        pygame.mixer.music.set_volume(0.2)
         pygame.mixer.music.play(-1)
 
     def run(self, events):
@@ -90,10 +87,8 @@ class MainMenu:
 
         mouse_pos = pygame.mouse.get_pos()
         
-        # Single event loop check for all buttons
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                # Check Chapters
                 for btn in self.buttons:
                     if self.get_btn_rect(btn).collidepoint(mouse_pos):
                         pygame.mixer.music.fadeout(500)
@@ -105,12 +100,10 @@ class MainMenu:
                     pygame.quit()
                     sys.exit()
 
-        # Draw Buttons (Visuals only)
         for btn in self.buttons:
             self.draw_menu_button(btn, mouse_pos)
         self.draw_menu_button(self.exit_button, mouse_pos)
 
-    # Helper function to get collision box easily
     def get_btn_rect(self, btn):
         surf = self.button_font.render(btn["text"], True, (255, 255, 255))
         return surf.get_rect(topleft=btn["position"])
@@ -119,22 +112,15 @@ class MainMenu:
         self.window_surface.fill((0, 0, 0))
         mx, my = pygame.mouse.get_pos()
 
-        # 1. Define the target based on mouse position
-        # We use 'min/max' to clamp the target so it doesn't 
-        # go crazy if the mouse is far outside the window.
         target_x = max(0, min(self.SCREEN_WIDTH, mx)) - self.SCREEN_WIDTH // 2
         target_y = max(0, min(self.SCREEN_HEIGHT, my)) - self.SCREEN_HEIGHT // 2
 
-        # 2. Smoothly move (LERP) current offset toward the target
-        # Formula: current += (target - current) * speed
         self.current_off_x += (target_x - self.current_off_x) * self.lerp_speed
         self.current_off_y += (target_y - self.current_off_y) * self.lerp_speed
 
-        # 3. Draw layers using the smoothed current_off
         for i, layer in enumerate(self.layers):
             depth = (i + 1) * 0.02
             
-            # Apply the smoothed offset multiplied by depth
             off_x = self.current_off_x * depth
             off_y = self.current_off_y * depth
             
@@ -142,7 +128,6 @@ class MainMenu:
             ly = (self.window_rect.height - layer.get_height()) // 2 - off_y
             self.window_surface.blit(layer, (lx, ly))
 
-        # Snow particles
         for p in self.snow_particles:
             p.update()
             p.draw(self.window_surface)
@@ -153,14 +138,12 @@ class MainMenu:
         text = btn["text"]
         x, y = btn["position"]
         
-        # Create a temporary rect for collision detection using the base font
         base_surf = self.button_font.render(text, True, (255, 255, 255))
         base_rect = base_surf.get_rect(topleft=(x, y))
         
         is_hover = base_rect.collidepoint(mouse_pos)
         
         if is_hover:
-            # Grow effect: use larger font and slightly red color
             color = (255, 100, 100) 
             font = self.hover_font
         else:
@@ -169,8 +152,6 @@ class MainMenu:
             
         text_surf = font.render(text, True, color)
         
-        # Align using midleft so the text grows vertically centered relative to its original position
-        # This prevents the list from "jumping" awkwardly
         rect = text_surf.get_rect(midleft=(x, y + base_rect.height // 2))
         
         self.display.blit(text_surf, rect)
