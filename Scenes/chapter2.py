@@ -75,7 +75,8 @@ class Chapter2:
 
         if scene_name == "scene1":
             self.play_bgm("scene1")
-            self.light_radius = 200
+            if not hasattr(self, "light_radius"):
+                self.light_radius = 200
             self.player = Player(120, -50, self.PLAYER_SCALE, 4, 0.5)
             self.platforms = [Platform(0, 500, self.WIDTH, 100)]
             self.sign_rect = pygame.Rect(380, 440, 40, 60)
